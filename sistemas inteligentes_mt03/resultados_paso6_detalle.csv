@@ -1,0 +1,107 @@
+candidato;parametros;macro_f1_media;macro_f1_desv;macro_f1_train;ranking
+LogReg + TF-IDF+Emb;{'clf__C': 10, 'prep__tfidf__min_df': 2, 'prep__tfidf__ngram_range': (1, 2)};0.7142;0.0415;1.0;1
+LogReg + TF-IDF+Emb;{'clf__C': 30, 'prep__tfidf__min_df': 2, 'prep__tfidf__ngram_range': (1, 2)};0.7123;0.0438;1.0;2
+LogReg + TF-IDF+Emb;{'clf__C': 3, 'prep__tfidf__min_df': 2, 'prep__tfidf__ngram_range': (1, 1)};0.707;0.0385;0.9869;3
+LogReg + TF-IDF+Emb;{'clf__C': 100, 'prep__tfidf__min_df': 2, 'prep__tfidf__ngram_range': (1, 2)};0.7029;0.0395;1.0;4
+LogReg + TF-IDF+Emb;{'clf__C': 10, 'prep__tfidf__min_df': 3, 'prep__tfidf__ngram_range': (1, 2)};0.7023;0.0314;1.0;5
+LogReg + TF-IDF+Emb;{'clf__C': 3, 'prep__tfidf__min_df': 3, 'prep__tfidf__ngram_range': (1, 1)};0.7018;0.0358;0.9847;6
+LogReg + TF-IDF+Emb;{'clf__C': 30, 'prep__tfidf__min_df': 1, 'prep__tfidf__ngram_range': (1, 2)};0.7015;0.0488;1.0;7
+LogReg + TF-IDF+Emb;{'clf__C': 1, 'prep__tfidf__min_df': 1, 'prep__tfidf__ngram_range': (1, 1)};0.7012;0.034;0.9331;8
+LogReg + TF-IDF+Emb;{'clf__C': 10, 'prep__tfidf__min_df': 1, 'prep__tfidf__ngram_range': (1, 1)};0.6999;0.0264;1.0;9
+LogReg + TF-IDF+Emb;{'clf__C': 1, 'prep__tfidf__min_df': 2, 'prep__tfidf__ngram_range': (1, 1)};0.6997;0.0341;0.9243;10
+LogReg + TF-IDF+Emb;{'clf__C': 3, 'prep__tfidf__min_df': 2, 'prep__tfidf__ngram_range': (1, 2)};0.6977;0.0476;0.9922;11
+LogReg + TF-IDF+Emb;{'clf__C': 10, 'prep__tfidf__min_df': 1, 'prep__tfidf__ngram_range': (1, 2)};0.6976;0.0501;1.0;12
+LogReg + TF-IDF+Emb;{'clf__C': 30, 'prep__tfidf__min_df': 3, 'prep__tfidf__ngram_range': (1, 2)};0.6975;0.0389;1.0;13
+LogReg + TF-IDF+Emb;{'clf__C': 3, 'prep__tfidf__min_df': 1, 'prep__tfidf__ngram_range': (1, 2)};0.6972;0.0455;0.9936;14
+LogReg + TF-IDF+Emb;{'clf__C': 30, 'prep__tfidf__min_df': 1, 'prep__tfidf__ngram_range': (1, 1)};0.6971;0.0348;1.0;15
+LogReg + TF-IDF+Emb;{'clf__C': 3, 'prep__tfidf__min_df': 3, 'prep__tfidf__ngram_range': (1, 2)};0.6959;0.0332;0.9867;16
+LogReg + TF-IDF+Emb;{'clf__C': 3, 'prep__tfidf__min_df': 1, 'prep__tfidf__ngram_range': (1, 1)};0.6957;0.0304;0.9898;17
+LogReg + TF-IDF+Emb;{'clf__C': 10, 'prep__tfidf__min_df': 2, 'prep__tfidf__ngram_range': (1, 1)};0.6947;0.0306;1.0;18
+LogReg + TF-IDF+Emb;{'clf__C': 1, 'prep__tfidf__min_df': 3, 'prep__tfidf__ngram_range': (1, 2)};0.6944;0.0325;0.9208;19
+LogReg + TF-IDF+Emb;{'clf__C': 100, 'prep__tfidf__min_df': 1, 'prep__tfidf__ngram_range': (1, 2)};0.6927;0.0407;1.0;20
+LogReg + TF-IDF+Emb;{'clf__C': 1, 'prep__tfidf__min_df': 3, 'prep__tfidf__ngram_range': (1, 1)};0.6925;0.0362;0.9195;21
+LogReg + TF-IDF+Emb;{'clf__C': 1, 'prep__tfidf__min_df': 2, 'prep__tfidf__ngram_range': (1, 2)};0.6925;0.0411;0.9327;22
+LogReg + TF-IDF+Emb;{'clf__C': 100, 'prep__tfidf__min_df': 3, 'prep__tfidf__ngram_range': (1, 2)};0.6908;0.0358;1.0;23
+LogReg + TF-IDF+Emb;{'clf__C': 30, 'prep__tfidf__min_df': 2, 'prep__tfidf__ngram_range': (1, 1)};0.6903;0.024;1.0;24
+LogReg + TF-IDF+Emb;{'clf__C': 1, 'prep__tfidf__min_df': 1, 'prep__tfidf__ngram_range': (1, 2)};0.6899;0.0424;0.9464;25
+LogReg + TF-IDF+Emb;{'clf__C': 100, 'prep__tfidf__min_df': 1, 'prep__tfidf__ngram_range': (1, 1)};0.6869;0.019;1.0;26
+LogReg + TF-IDF+Emb;{'clf__C': 10, 'prep__tfidf__min_df': 3, 'prep__tfidf__ngram_range': (1, 1)};0.6864;0.0245;1.0;27
+LogReg + TF-IDF+Emb;{'clf__C': 100, 'prep__tfidf__min_df': 2, 'prep__tfidf__ngram_range': (1, 1)};0.6824;0.0272;1.0;28
+LogReg + TF-IDF+Emb;{'clf__C': 0.3, 'prep__tfidf__min_df': 3, 'prep__tfidf__ngram_range': (1, 1)};0.6808;0.03;0.8343;29
+LogReg + TF-IDF+Emb;{'clf__C': 0.1, 'prep__tfidf__min_df': 3, 'prep__tfidf__ngram_range': (1, 2)};0.6755;0.033;0.763;30
+LogReg + TF-IDF+Emb;{'clf__C': 0.3, 'prep__tfidf__min_df': 3, 'prep__tfidf__ngram_range': (1, 2)};0.6747;0.0468;0.8409;31
+LogReg + TF-IDF+Emb;{'clf__C': 0.3, 'prep__tfidf__min_df': 2, 'prep__tfidf__ngram_range': (1, 2)};0.6744;0.0465;0.8449;32
+LogReg + TF-IDF+Emb;{'clf__C': 0.3, 'prep__tfidf__min_df': 1, 'prep__tfidf__ngram_range': (1, 1)};0.6726;0.0357;0.845;33
+LogReg + TF-IDF+Emb;{'clf__C': 0.3, 'prep__tfidf__min_df': 2, 'prep__tfidf__ngram_range': (1, 1)};0.672;0.0362;0.8388;34
+LogReg + TF-IDF+Emb;{'clf__C': 30, 'prep__tfidf__min_df': 3, 'prep__tfidf__ngram_range': (1, 1)};0.672;0.0231;1.0;35
+LogReg + TF-IDF+Emb;{'clf__C': 0.1, 'prep__tfidf__min_df': 2, 'prep__tfidf__ngram_range': (1, 2)};0.6712;0.0432;0.7624;36
+LogReg + TF-IDF+Emb;{'clf__C': 0.3, 'prep__tfidf__min_df': 1, 'prep__tfidf__ngram_range': (1, 2)};0.6705;0.0437;0.8602;37
+LogReg + TF-IDF+Emb;{'clf__C': 100, 'prep__tfidf__min_df': 3, 'prep__tfidf__ngram_range': (1, 1)};0.6704;0.0208;1.0;38
+LogReg + TF-IDF+Emb;{'clf__C': 0.1, 'prep__tfidf__min_df': 1, 'prep__tfidf__ngram_range': (1, 2)};0.6668;0.0359;0.7667;39
+LogReg + TF-IDF+Emb;{'clf__C': 0.1, 'prep__tfidf__min_df': 2, 'prep__tfidf__ngram_range': (1, 1)};0.6666;0.0391;0.7601;40
+LogReg + TF-IDF+Emb;{'clf__C': 0.1, 'prep__tfidf__min_df': 3, 'prep__tfidf__ngram_range': (1, 1)};0.6649;0.0373;0.7618;41
+LogReg + TF-IDF+Emb;{'clf__C': 0.1, 'prep__tfidf__min_df': 1, 'prep__tfidf__ngram_range': (1, 1)};0.6648;0.0404;0.7651;42
+SVM + Embeddings;{'clf__C': 1, 'clf__class_weight': None};0.7;0.03;0.825;1
+SVM + Embeddings;{'clf__C': 1, 'clf__class_weight': 'balanced'};0.6942;0.0341;0.8229;2
+SVM + Embeddings;{'clf__C': 0.3, 'clf__class_weight': None};0.6929;0.0488;0.7823;3
+SVM + Embeddings;{'clf__C': 0.3, 'clf__class_weight': 'balanced'};0.6856;0.0366;0.7694;4
+SVM + Embeddings;{'clf__C': 3, 'clf__class_weight': None};0.6854;0.0135;0.8772;5
+SVM + Embeddings;{'clf__C': 0.1, 'clf__class_weight': None};0.6838;0.0497;0.7443;6
+SVM + Embeddings;{'clf__C': 3, 'clf__class_weight': 'balanced'};0.6813;0.0135;0.877;7
+SVM + Embeddings;{'clf__C': 10, 'clf__class_weight': 'balanced'};0.6684;0.0206;0.935;8
+SVM + Embeddings;{'clf__C': 0.03, 'clf__class_weight': 'balanced'};0.668;0.0365;0.7059;9
+SVM + Embeddings;{'clf__C': 0.1, 'clf__class_weight': 'balanced'};0.6641;0.0351;0.7258;10
+SVM + Embeddings;{'clf__C': 0.01, 'clf__class_weight': 'balanced'};0.6633;0.0395;0.6999;11
+SVM + Embeddings;{'clf__C': 10, 'clf__class_weight': None};0.6604;0.0223;0.9318;12
+SVM + Embeddings;{'clf__C': 30, 'clf__class_weight': 'balanced'};0.6483;0.0218;0.9792;13
+SVM + Embeddings;{'clf__C': 30, 'clf__class_weight': None};0.6483;0.0162;0.977;14
+SVM + Embeddings;{'clf__C': 0.03, 'clf__class_weight': None};0.6439;0.0441;0.6915;15
+SVM + Embeddings;{'clf__C': 0.01, 'clf__class_weight': None};0.5305;0.0313;0.5565;16
+SVM + TF-IDF+Emb;{'clf__C': 1, 'prep__tfidf__min_df': 2, 'prep__tfidf__ngram_range': (1, 2)};0.7027;0.0396;1.0;1
+SVM + TF-IDF+Emb;{'clf__C': 0.3, 'prep__tfidf__min_df': 1, 'prep__tfidf__ngram_range': (1, 1)};0.7019;0.0438;0.9787;2
+SVM + TF-IDF+Emb;{'clf__C': 0.1, 'prep__tfidf__min_df': 3, 'prep__tfidf__ngram_range': (1, 2)};0.7018;0.0471;0.8974;3
+SVM + TF-IDF+Emb;{'clf__C': 1, 'prep__tfidf__min_df': 1, 'prep__tfidf__ngram_range': (1, 2)};0.7011;0.0442;1.0;4
+SVM + TF-IDF+Emb;{'clf__C': 0.3, 'prep__tfidf__min_df': 3, 'prep__tfidf__ngram_range': (1, 2)};0.6991;0.0357;0.9711;5
+SVM + TF-IDF+Emb;{'clf__C': 0.3, 'prep__tfidf__min_df': 3, 'prep__tfidf__ngram_range': (1, 1)};0.6989;0.0428;0.9649;6
+SVM + TF-IDF+Emb;{'clf__C': 0.3, 'prep__tfidf__min_df': 2, 'prep__tfidf__ngram_range': (1, 2)};0.6979;0.0535;0.9788;7
+SVM + TF-IDF+Emb;{'clf__C': 0.1, 'prep__tfidf__min_df': 2, 'prep__tfidf__ngram_range': (1, 1)};0.6972;0.0315;0.8953;8
+SVM + TF-IDF+Emb;{'clf__C': 0.3, 'prep__tfidf__min_df': 2, 'prep__tfidf__ngram_range': (1, 1)};0.6971;0.0364;0.9713;9
+SVM + TF-IDF+Emb;{'clf__C': 3, 'prep__tfidf__min_df': 1, 'prep__tfidf__ngram_range': (1, 2)};0.6966;0.0463;1.0;10
+SVM + TF-IDF+Emb;{'clf__C': 0.1, 'prep__tfidf__min_df': 2, 'prep__tfidf__ngram_range': (1, 2)};0.6936;0.0392;0.9075;11
+SVM + TF-IDF+Emb;{'clf__C': 0.1, 'prep__tfidf__min_df': 1, 'prep__tfidf__ngram_range': (1, 2)};0.6932;0.0438;0.9235;12
+SVM + TF-IDF+Emb;{'clf__C': 3, 'prep__tfidf__min_df': 2, 'prep__tfidf__ngram_range': (1, 2)};0.6925;0.0321;1.0;13
+SVM + TF-IDF+Emb;{'clf__C': 0.3, 'prep__tfidf__min_df': 1, 'prep__tfidf__ngram_range': (1, 2)};0.692;0.0487;0.9918;14
+SVM + TF-IDF+Emb;{'clf__C': 1, 'prep__tfidf__min_df': 3, 'prep__tfidf__ngram_range': (1, 1)};0.6909;0.0126;0.9991;15
+SVM + TF-IDF+Emb;{'clf__C': 0.1, 'prep__tfidf__min_df': 1, 'prep__tfidf__ngram_range': (1, 1)};0.6906;0.0337;0.9098;16
+SVM + TF-IDF+Emb;{'clf__C': 0.03, 'prep__tfidf__min_df': 3, 'prep__tfidf__ngram_range': (1, 2)};0.688;0.0453;0.8205;17
+SVM + TF-IDF+Emb;{'clf__C': 1, 'prep__tfidf__min_df': 2, 'prep__tfidf__ngram_range': (1, 1)};0.6875;0.0136;1.0;18
+SVM + TF-IDF+Emb;{'clf__C': 0.1, 'prep__tfidf__min_df': 3, 'prep__tfidf__ngram_range': (1, 1)};0.6862;0.0341;0.8865;19
+SVM + TF-IDF+Emb;{'clf__C': 1, 'prep__tfidf__min_df': 1, 'prep__tfidf__ngram_range': (1, 1)};0.6851;0.0222;1.0;20
+SVM + TF-IDF+Emb;{'clf__C': 10, 'prep__tfidf__min_df': 1, 'prep__tfidf__ngram_range': (1, 2)};0.6849;0.0442;1.0;21
+SVM + TF-IDF+Emb;{'clf__C': 0.01, 'prep__tfidf__min_df': 1, 'prep__tfidf__ngram_range': (1, 1)};0.6842;0.0355;0.7801;22
+SVM + TF-IDF+Emb;{'clf__C': 30, 'prep__tfidf__min_df': 1, 'prep__tfidf__ngram_range': (1, 2)};0.683;0.0452;1.0;23
+SVM + TF-IDF+Emb;{'clf__C': 0.03, 'prep__tfidf__min_df': 2, 'prep__tfidf__ngram_range': (1, 1)};0.6817;0.0407;0.8138;24
+SVM + TF-IDF+Emb;{'clf__C': 1, 'prep__tfidf__min_df': 3, 'prep__tfidf__ngram_range': (1, 2)};0.6809;0.0303;1.0;25
+SVM + TF-IDF+Emb;{'clf__C': 0.03, 'prep__tfidf__min_df': 2, 'prep__tfidf__ngram_range': (1, 2)};0.6807;0.0435;0.8229;26
+SVM + TF-IDF+Emb;{'clf__C': 0.01, 'prep__tfidf__min_df': 2, 'prep__tfidf__ngram_range': (1, 1)};0.6802;0.0385;0.7749;27
+SVM + TF-IDF+Emb;{'clf__C': 0.01, 'prep__tfidf__min_df': 3, 'prep__tfidf__ngram_range': (1, 1)};0.6802;0.041;0.7706;28
+SVM + TF-IDF+Emb;{'clf__C': 10, 'prep__tfidf__min_df': 2, 'prep__tfidf__ngram_range': (1, 2)};0.6787;0.0361;1.0;29
+SVM + TF-IDF+Emb;{'clf__C': 0.03, 'prep__tfidf__min_df': 3, 'prep__tfidf__ngram_range': (1, 1)};0.6777;0.0347;0.811;30
+SVM + TF-IDF+Emb;{'clf__C': 0.03, 'prep__tfidf__min_df': 1, 'prep__tfidf__ngram_range': (1, 2)};0.6774;0.0456;0.8324;31
+SVM + TF-IDF+Emb;{'clf__C': 30, 'prep__tfidf__min_df': 2, 'prep__tfidf__ngram_range': (1, 2)};0.6769;0.0348;1.0;32
+SVM + TF-IDF+Emb;{'clf__C': 0.03, 'prep__tfidf__min_df': 1, 'prep__tfidf__ngram_range': (1, 1)};0.6757;0.037;0.8179;33
+SVM + TF-IDF+Emb;{'clf__C': 3, 'prep__tfidf__min_df': 2, 'prep__tfidf__ngram_range': (1, 1)};0.6746;0.0084;1.0;34
+SVM + TF-IDF+Emb;{'clf__C': 0.01, 'prep__tfidf__min_df': 3, 'prep__tfidf__ngram_range': (1, 2)};0.6732;0.0463;0.7813;35
+SVM + TF-IDF+Emb;{'clf__C': 3, 'prep__tfidf__min_df': 3, 'prep__tfidf__ngram_range': (1, 2)};0.6718;0.0408;1.0;36
+SVM + TF-IDF+Emb;{'clf__C': 0.01, 'prep__tfidf__min_df': 2, 'prep__tfidf__ngram_range': (1, 2)};0.6706;0.0442;0.7894;37
+SVM + TF-IDF+Emb;{'clf__C': 3, 'prep__tfidf__min_df': 1, 'prep__tfidf__ngram_range': (1, 1)};0.6618;0.0197;1.0;38
+SVM + TF-IDF+Emb;{'clf__C': 0.01, 'prep__tfidf__min_df': 1, 'prep__tfidf__ngram_range': (1, 2)};0.6617;0.0406;0.799;39
+SVM + TF-IDF+Emb;{'clf__C': 3, 'prep__tfidf__min_df': 3, 'prep__tfidf__ngram_range': (1, 1)};0.661;0.0081;1.0;40
+SVM + TF-IDF+Emb;{'clf__C': 10, 'prep__tfidf__min_df': 3, 'prep__tfidf__ngram_range': (1, 2)};0.6598;0.0328;1.0;41
+SVM + TF-IDF+Emb;{'clf__C': 30, 'prep__tfidf__min_df': 3, 'prep__tfidf__ngram_range': (1, 2)};0.6568;0.0365;1.0;42
+SVM + TF-IDF+Emb;{'clf__C': 10, 'prep__tfidf__min_df': 2, 'prep__tfidf__ngram_range': (1, 1)};0.6525;0.0169;1.0;43
+SVM + TF-IDF+Emb;{'clf__C': 30, 'prep__tfidf__min_df': 2, 'prep__tfidf__ngram_range': (1, 1)};0.651;0.0144;1.0;44
+SVM + TF-IDF+Emb;{'clf__C': 10, 'prep__tfidf__min_df': 1, 'prep__tfidf__ngram_range': (1, 1)};0.649;0.0146;1.0;45
+SVM + TF-IDF+Emb;{'clf__C': 30, 'prep__tfidf__min_df': 1, 'prep__tfidf__ngram_range': (1, 1)};0.6464;0.0107;1.0;46
+SVM + TF-IDF+Emb;{'clf__C': 10, 'prep__tfidf__min_df': 3, 'prep__tfidf__ngram_range': (1, 1)};0.6425;0.0237;1.0;47
+SVM + TF-IDF+Emb;{'clf__C': 30, 'prep__tfidf__min_df': 3, 'prep__tfidf__ngram_range': (1, 1)};0.638;0.0191;1.0;48

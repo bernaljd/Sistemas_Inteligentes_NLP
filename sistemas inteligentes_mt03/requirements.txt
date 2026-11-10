@@ -1,0 +1,8 @@
+# Paso 7 - evaluacion final (requiere Python 3.11 o superior)
+# scikit-learn fijo en la version con la que se guardo modelo_paso6.joblib
+scikit-learn==1.9.1
+sentence-transformers
+numpy
+pandas
+matplotlib
+joblib

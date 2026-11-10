@@ -1,0 +1,149 @@
+
+==========================================================================================
+0. VERSIONES Y DATOS
+==========================================================================================
+  python                 3.14.2
+  sistema                macOS-27.2-arm64-arm-64bit-Mach-O
+  scikit-learn           1.9.1
+  numpy                  2.5.4
+  pandas                 3.1.1
+  joblib                 1.6.0
+  sentence-transformers  6.2.0
+  torch                  2.15.0
+  sha256 train.csv              7604d4bf48dfa2c6...
+  sha256 test.csv               9689b878fca098af...
+  sha256 embeddings_train.npy   d719faf651f7dc26...
+  sha256 modelo_paso6.joblib    078242e79536220e...
+
+==========================================================================================
+1. DATOS
+==========================================================================================
+Train: 491 | Test: 123
+Clases en test: {'negativo': 41, 'neutral': 52, 'positivo': 30}
+Contraste en test: {True: 94, False: 29}
+
+==========================================================================================
+2. EMBEDDINGS
+==========================================================================================
+Cargando paraphrase-multilingual-MiniLM-L12-v2 (la primera vez lo descarga)...
+Similitud coseno train recalculado vs. guardado: min = 1.000000, media = 1.000000
+Embeddings de test: (123, 384) -> guardados en embeddings_test.npy
+
+==========================================================================================
+3. MODELO PRINCIPAL
+==========================================================================================
+Parametros del paso 6 para LogReg + TF-IDF+Emb: {'clf__C': 10, 'prep__tfidf__min_df': 2, 'prep__tfidf__ngram_range': (1, 2)}
+  Diferencia max. de probabilidades (cargado vs. reentrenado, en train): 1.76e-11
+  OK: modelo cargado de modelo_paso6.joblib
+  Macro-F1 del modelo principal sobre train (memorizacion): 1.000
+
+==========================================================================================
+4. MODELOS DE COMPARACION (reentrenados con train)
+==========================================================================================
+  SVM + TF-IDF+Emb: {'clf__C': 1, 'prep__tfidf__min_df': 2, 'prep__tfidf__ngram_range': (1, 2)}
+  SVM + Embeddings: {'clf__C': 1, 'clf__class_weight': None}
+  Dummy (clase mayoritaria)
+  Dummy (aleatorio estratificado)
+
+==========================================================================================
+5. EVALUACION EN TEST (n = 123)
+==========================================================================================
+                         modelo                     rol  macro_f1_cv  macro_f1_test  macro_f1_test_ic95_inf  macro_f1_test_ic95_sup  accuracy_test
+            LogReg + TF-IDF+Emb               principal        0.714          0.664                   0.571                   0.748          0.667
+               SVM + TF-IDF+Emb candidato (comparacion)        0.703          0.664                   0.576                   0.747          0.667
+               SVM + Embeddings candidato (comparacion)        0.700          0.691                   0.607                   0.769          0.699
+      Dummy (clase mayoritaria)              linea base        0.197          0.198                   0.167                   0.223          0.423
+Dummy (aleatorio estratificado)              linea base        0.301          0.338                   0.254                   0.425          0.358
+
+Precision / recall / F1 por clase en test:
+  LogReg + TF-IDF+Emb
+    negativo  P = 0.744  R = 0.780  F1 = 0.762  (n = 41)
+    neutral   P = 0.627  R = 0.615  F1 = 0.621  (n = 52)
+    positivo  P = 0.621  R = 0.600  F1 = 0.610  (n = 30)
+  SVM + TF-IDF+Emb
+    negativo  P = 0.717  R = 0.805  F1 = 0.759  (n = 41)
+    neutral   P = 0.633  R = 0.596  F1 = 0.614  (n = 52)
+    positivo  P = 0.643  R = 0.600  F1 = 0.621  (n = 30)
+  SVM + Embeddings
+    negativo  P = 0.725  R = 0.902  F1 = 0.804  (n = 41)
+    neutral   P = 0.732  R = 0.577  F1 = 0.645  (n = 52)
+    positivo  P = 0.613  R = 0.633  F1 = 0.623  (n = 30)
+  Dummy (clase mayoritaria)
+    negativo  P = 0.000  R = 0.000  F1 = 0.000  (n = 41)
+    neutral   P = 0.423  R = 1.000  F1 = 0.594  (n = 52)
+    positivo  P = 0.000  R = 0.000  F1 = 0.000  (n = 30)
+  Dummy (aleatorio estratificado)
+    negativo  P = 0.400  R = 0.390  F1 = 0.395  (n = 41)
+    neutral   P = 0.407  R = 0.423  F1 = 0.415  (n = 52)
+    positivo  P = 0.207  R = 0.200  F1 = 0.203  (n = 30)
+
+IC 95% de la diferencia de macro-F1 (principal - otro), bootstrap pareado:
+  vs SVM + TF-IDF+Emb                  [-0.029, +0.033]  incluye 0: diferencia NO concluyente
+  vs SVM + Embeddings                  [-0.094, +0.041]  incluye 0: diferencia NO concluyente
+  vs Dummy (clase mayoritaria)         [+0.368, +0.558]  no incluye 0
+  vs Dummy (aleatorio estratificado)   [+0.190, +0.450]  no incluye 0
+
+==========================================================================================
+6. TEST vs. VALIDACION CRUZADA (modelo principal)
+==========================================================================================
+  Macro-F1 CV (paso 6):  0.714 +/- 0.042
+  Macro-F1 test:         0.664  IC 95% [0.571, 0.748]
+  Diferencia test - CV:  -0.050
+  El rendimiento en test es MENOR que en validacion cruzada (se reporta tal cual).
+  El valor de CV SI cae dentro del IC 95% de test.
+  Macro-F1 en train: 1.000 (memoriza el entrenamiento).
+
+==========================================================================================
+7. MATRIZ DE CONFUSION (modelo principal)
+==========================================================================================
+Conteos (filas = real, columnas = predicho):
+          negativo  neutral  positivo
+negativo        32        7         2
+neutral         11       32         9
+positivo         0       12        18
+
+Normalizada por fila (recall en la diagonal):
+          negativo  neutral  positivo
+negativo     0.780    0.171     0.049
+neutral      0.212    0.615     0.173
+positivo     0.000    0.400     0.600
+
+Guardada: matriz_confusion_paso7.png
+
+==========================================================================================
+8. ERRORES DEL MODELO PRINCIPAL
+==========================================================================================
+Errores: 41 de 123 (33.3%)
+
+Por tipo de error:
+categoria_error
+neutral<->polar        39
+positivo<->negativo     2
+
+Por direccion (real->predicho):
+direccion
+positivo->neutral     12
+neutral->negativo     11
+neutral->positivo      9
+negativo->neutral      7
+negativo->positivo     2
+
+Tasa de error segun contraste:
+            n  errores  tasa_error
+contraste                         
+False      29        4       0.138
+True       94       37       0.394
+
+Tasa de error segun archivo_origen:
+                 n  errores  tasa_error
+archivo_origen                         
+1.0             32       12       0.375
+2.0             84       27       0.321
+3.0              7        2       0.286
+
+==========================================================================================
+LISTO
+==========================================================================================
+Guardados: resultados_paso7.csv, errores_test.csv, predicciones_test.csv,
+           matriz_confusion_paso7.png, embeddings_test.npy,
+           registro_modelo_paso7.json, paso7_salida.txt

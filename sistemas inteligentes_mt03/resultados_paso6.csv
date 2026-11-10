@@ -1,0 +1,4 @@
+candidato;macro_f1_media;macro_f1_desv;macro_f1_train;combinaciones_probadas;mejores_parametros;segundos
+LogReg + TF-IDF+Emb;0.714;0.042;1.0;42;{'clf__C': 10, 'prep__tfidf__min_df': 2, 'prep__tfidf__ngram_range': (1, 2)};12.842
+SVM + TF-IDF+Emb;0.703;0.04;1.0;48;{'clf__C': 1, 'prep__tfidf__min_df': 2, 'prep__tfidf__ngram_range': (1, 2)};36.384
+SVM + Embeddings;0.7;0.03;0.825;16;{'clf__C': 1, 'clf__class_weight': None};3.812

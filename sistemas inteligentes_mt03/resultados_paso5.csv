@@ -1,0 +1,19 @@
+representacion;modelo;macro_f1_media;macro_f1_desv;accuracy_media;accuracy_desv;macro_f1_train;segundos
+TF-IDF + Embeddings;Linear SVM;0.703;0.04;0.707;0.046;1.0;0.595
+Embeddings;Linear SVM;0.694;0.034;0.694;0.035;0.823;0.238
+TF-IDF + Embeddings;Logistic Regression;0.692;0.041;0.692;0.043;0.933;0.756
+TF-IDF + Embeddings;Random Forest;0.674;0.024;0.672;0.023;1.0;4.092
+Embeddings;Random Forest;0.667;0.033;0.666;0.034;1.0;4.291
+TF-IDF + Embeddings;Naive Bayes;0.664;0.019;0.678;0.02;0.837;0.408
+Embeddings;Logistic Regression;0.661;0.035;0.66;0.035;0.735;0.176
+Embeddings;Naive Bayes;0.646;0.049;0.643;0.048;0.703;0.081
+TF-IDF;Logistic Regression;0.635;0.016;0.644;0.019;0.976;0.357
+TF-IDF;Naive Bayes;0.627;0.041;0.644;0.041;0.941;0.319
+TF-IDF;Random Forest;0.622;0.02;0.631;0.02;1.0;4.389
+TF-IDF;Linear SVM;0.611;0.048;0.621;0.05;1.0;0.305
+TF-IDF + Embeddings;Dummy (aleatorio estratificado);0.301;0.051;0.324;0.05;0.34;0.473
+TF-IDF;Dummy (aleatorio estratificado);0.301;0.051;0.324;0.05;0.34;0.321
+Embeddings;Dummy (aleatorio estratificado);0.301;0.051;0.324;0.05;0.34;0.057
+TF-IDF;Dummy (clase mayoritaria);0.197;0.001;0.42;0.002;0.197;0.439
+Embeddings;Dummy (clase mayoritaria);0.197;0.001;0.42;0.002;0.197;0.05
+TF-IDF + Embeddings;Dummy (clase mayoritaria);0.197;0.001;0.42;0.002;0.197;0.522

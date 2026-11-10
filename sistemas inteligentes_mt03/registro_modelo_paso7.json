@@ -1,0 +1,47 @@
+{
+  "fecha": "2026-11-09T14:28:07",
+  "modelo_principal": "LogReg + TF-IDF+Emb",
+  "origen_modelo": "cargado de modelo_paso6.joblib",
+  "parametros": {
+    "clf__C": "10",
+    "clf__class_weight": "balanced",
+    "clf__max_iter": "5000",
+    "prep__tfidf__ngram_range": "(1, 2)",
+    "prep__tfidf__min_df": "2",
+    "prep__tfidf__sublinear_tf": "True"
+  },
+  "modelo_embeddings": "paraphrase-multilingual-MiniLM-L12-v2",
+  "entrada": "texto_limpio (TF-IDF) + embeddings de feedback (emb_0..emb_383)",
+  "macro_f1_cv": 0.714,
+  "macro_f1_cv_desv": 0.042,
+  "macro_f1_train": 1.0,
+  "macro_f1_test": 0.6644778255770522,
+  "macro_f1_test_ic95": [
+    0.5708352751303647,
+    0.7477751826442257
+  ],
+  "accuracy_test": 0.6666666666666666,
+  "n_train": 491,
+  "n_test": 123,
+  "bootstrap": {
+    "remuestreos": 1000,
+    "metodo": "percentil",
+    "semilla": 42
+  },
+  "sha256_datos": {
+    "train.csv": "7604d4bf48dfa2c60be01851ad23245be03d00f51006703b5f37b4b9b48778f1",
+    "test.csv": "9689b878fca098af8955035080aa9cc87c9d2b2eeab818c0b60030e8c08a26a0",
+    "embeddings_train.npy": "d719faf651f7dc261fa30109161de16ced6d16198349cb5b0cef38f0f7a546d8",
+    "modelo_paso6.joblib": "078242e79536220ec26b60399c74c9f9e96455663cf84e6d83d2acd12316a3bf"
+  },
+  "versiones": {
+    "python": "3.14.2",
+    "sistema": "macOS-27.2-arm64-arm-64bit-Mach-O",
+    "scikit-learn": "1.9.1",
+    "numpy": "2.5.4",
+    "pandas": "3.1.1",
+    "joblib": "1.6.0",
+    "sentence-transformers": "6.2.0",
+    "torch": "2.15.0"
+  }
+}
