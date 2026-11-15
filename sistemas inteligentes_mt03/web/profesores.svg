@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 340" role="img" aria-labelledby="t">
+  <title id="t">Dos docentes frente a un tablero con caras de opinión positiva, neutral y negativa</title>
+
+  <!-- Fondo suave -->
+  <circle cx="290" cy="150" r="150" fill="#eef3fb"/>
+  <circle cx="420" cy="60" r="38" fill="#fdf1d6"/>
+  <ellipse cx="270" cy="322" rx="200" ry="12" fill="#e6ebf3"/>
+
+  <!-- Tablero -->
+  <rect x="150" y="38" width="236" height="156" rx="10" fill="#9a6a45"/>
+  <rect x="159" y="47" width="218" height="138" rx="5" fill="#2f5d50"/>
+  <rect x="190" y="193" width="156" height="7" rx="3" fill="#7c5336"/>
+  <rect x="300" y="189" width="16" height="5" rx="2" fill="#f8f4e3"/>
+  <rect x="320" y="189" width="10" height="5" rx="2" fill="#f2b134"/>
+  <!-- Escritura de tiza -->
+  <path d="M176 70 h70 M176 82 h46" stroke="#e8efe9" stroke-width="3" stroke-linecap="round" opacity=".75"/>
+  <!-- Caras: positivo / neutral / negativo -->
+  <g fill="none" stroke-width="3" stroke-linecap="round">
+    <g transform="translate(205 135)" stroke="#8fe3c9">
+      <circle r="19"/>
+      <circle cx="-7" cy="-5" r="1.6" fill="#8fe3c9"/><circle cx="7" cy="-5" r="1.6" fill="#8fe3c9"/>
+      <path d="M-9 4 Q0 13 9 4"/>
+    </g>
+    <g transform="translate(268 135)" stroke="#d9dee6">
+      <circle r="19"/>
+      <circle cx="-7" cy="-5" r="1.6" fill="#d9dee6"/><circle cx="7" cy="-5" r="1.6" fill="#d9dee6"/>
+      <path d="M-8 7 H8"/>
+    </g>
+    <g transform="translate(331 135)" stroke="#ffb3ad">
+      <circle r="19"/>
+      <circle cx="-7" cy="-5" r="1.6" fill="#ffb3ad"/><circle cx="7" cy="-5" r="1.6" fill="#ffb3ad"/>
+      <path d="M-9 10 Q0 1 9 10"/>
+    </g>
+  </g>
+  <path d="M300 66 l8 8 l14 -16" fill="none" stroke="#f2b134" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Docente 1: señalando el tablero -->
+  <g>
+    <rect x="80" y="252" width="12" height="62" rx="5" fill="#2b2d42"/>
+    <rect x="99" y="252" width="12" height="62" rx="5" fill="#2b2d42"/>
+    <ellipse cx="84" cy="316" rx="11" ry="5" fill="#1b1c2b"/>
+    <ellipse cx="107" cy="316" rx="11" ry="5" fill="#1b1c2b"/>
+    <path d="M70 178 Q95 166 120 178 L126 262 Q95 270 64 262 Z" fill="#e76f51"/>
+    <path d="M88 170 L95 196 L102 170 Z" fill="#fff4ec"/>
+    <!-- brazo hacia el tablero -->
+    <path d="M114 182 L142 146" stroke="#e76f51" stroke-width="13" stroke-linecap="round"/>
+    <circle cx="145" cy="142" r="7" fill="#a86b3c"/>
+    <path d="M146 141 L186 102" stroke="#5c3d2e" stroke-width="3" stroke-linecap="round"/>
+    <!-- brazo con cuaderno -->
+    <path d="M74 184 L66 228" stroke="#e76f51" stroke-width="13" stroke-linecap="round"/>
+    <rect x="52" y="214" width="26" height="32" rx="3" fill="#2a9d8f" transform="rotate(-8 65 230)"/>
+    <circle cx="68" cy="232" r="6.5" fill="#a86b3c"/>
+    <!-- cabeza -->
+    <rect x="89" y="152" width="12" height="16" rx="5" fill="#a86b3c"/>
+    <circle cx="95" cy="138" r="22" fill="#a86b3c"/>
+    <path d="M72 140 Q70 112 96 113 Q121 114 118 138 Q112 124 96 124 Q80 125 72 140 Z" fill="#2e1b10"/>
+    <circle cx="95" cy="109" r="10" fill="#2e1b10"/>
+    <circle cx="87" cy="139" r="2" fill="#2e1b10"/><circle cx="103" cy="139" r="2" fill="#2e1b10"/>
+    <path d="M88 148 Q95 154 102 148" fill="none" stroke="#2e1b10" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="74" cy="142" r="2.5" fill="#f2b134"/>
+  </g>
+
+  <!-- Docente 2: con libro y gafas -->
+  <g>
+    <rect x="404" y="256" width="13" height="58" rx="5" fill="#3a3f58"/>
+    <rect x="424" y="256" width="13" height="58" rx="5" fill="#3a3f58"/>
+    <ellipse cx="409" cy="316" rx="12" ry="5" fill="#1b1c2b"/>
+    <ellipse cx="433" cy="316" rx="12" ry="5" fill="#1b1c2b"/>
+    <path d="M392 186 Q420 172 448 186 L452 264 Q420 272 388 264 Z" fill="#264653"/>
+    <path d="M412 178 L420 206 L428 178 Z" fill="#ffffff"/>
+    <path d="M418 186 L422 186 L424 212 L420 218 L416 212 Z" fill="#f2b134"/>
+    <!-- brazos y libro abierto -->
+    <path d="M398 194 L398 228" stroke="#264653" stroke-width="13" stroke-linecap="round"/>
+    <path d="M442 194 L442 228" stroke="#264653" stroke-width="13" stroke-linecap="round"/>
+    <path d="M393 222 L420 230 L420 256 L393 248 Z" fill="#f8f4e3" stroke="#d9cfae" stroke-width="1.5"/>
+    <path d="M447 222 L420 230 L420 256 L447 248 Z" fill="#fffdf4" stroke="#d9cfae" stroke-width="1.5"/>
+    <path d="M399 232 l14 4 M399 239 l14 4 M427 236 l14 -4 M427 243 l14 -4" stroke="#c9bf9c" stroke-width="1.5"/>
+    <circle cx="396" cy="238" r="6.5" fill="#f1c9a0"/>
+    <circle cx="444" cy="238" r="6.5" fill="#f1c9a0"/>
+    <!-- cabeza -->
+    <rect x="414" y="160" width="12" height="16" rx="5" fill="#f1c9a0"/>
+    <circle cx="420" cy="146" r="22" fill="#f1c9a0"/>
+    <path d="M398 142 Q398 120 420 121 Q443 121 442 142 Q436 130 420 131 Q404 131 398 142 Z" fill="#7a7f8c"/>
+    <g fill="none" stroke="#1f2937" stroke-width="2">
+      <circle cx="411" cy="146" r="6"/><circle cx="429" cy="146" r="6"/><path d="M417 146 h6"/>
+    </g>
+    <circle cx="411" cy="146" r="1.8" fill="#1f2937"/><circle cx="429" cy="146" r="1.8" fill="#1f2937"/>
+    <path d="M413 157 Q420 162 427 157" fill="none" stroke="#5a4636" stroke-width="2" stroke-linecap="round"/>
+  </g>
+
+  <!-- Globo de diálogo -->
+  <g transform="translate(372 30)">
+    <path d="M0 14 Q0 0 14 0 H58 Q72 0 72 14 V26 Q72 40 58 40 H30 L20 52 L22 40 H14 Q0 40 0 26 Z" fill="#ffffff" stroke="#c8d3e6" stroke-width="2"/>
+    <circle cx="20" cy="20" r="5" fill="#2a9d8f"/>
+    <circle cx="36" cy="20" r="5" fill="#8d99ae"/>
+    <circle cx="52" cy="20" r="5" fill="#d1495b"/>
+  </g>
+</svg>

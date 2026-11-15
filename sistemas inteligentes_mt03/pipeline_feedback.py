@@ -118,6 +118,31 @@ def construir_pipeline(C=10, ngram_range=(1, 2), min_df=2):
 # Prediccion segura
 # ---------------------------------------------------------------------------
 
+def leer_csv_bytes(contenido):
+    """Lee un CSV subido por el usuario (API e interfaz).
+
+    - Codificacion: utf-8 (con o sin BOM) o latin-1 (Excel en espanol).
+    - Separador: ';' o ',' segun la fila de encabezados (los comentarios suelen
+      tener comas dentro, por eso no se adivina con el contenido).
+    Lanza ValueError si no se puede leer.
+    """
+    import io
+    for codificacion in ["utf-8-sig", "latin-1"]:
+        try:
+            texto = contenido.decode(codificacion)
+            break
+        except UnicodeDecodeError:
+            continue
+    if not texto.strip():
+        raise ValueError("El archivo esta vacio")
+    encabezado = texto.splitlines()[0]
+    sep = ";" if encabezado.count(";") >= encabezado.count(",") and ";" in encabezado else ","
+    try:
+        return pd.read_csv(io.StringIO(texto), sep=sep)
+    except Exception as e:
+        raise ValueError(f"No se pudo leer el CSV: {e}") from e
+
+
 UMBRAL_CONFIANZA = 0.5  # con 3 clases, < 0.5 = ninguna clase tiene mayoria
 MIN_PALABRAS_UTILES = 1
 

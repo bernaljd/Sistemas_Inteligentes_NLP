@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Polaridad de comentarios para docentes</title>
+  <meta name="description" content="Clasifica comentarios de estudiantes en positivo, neutral o negativo.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%2324479b'/><path d='M8 10h16v9H15l-5 4v-4H8z' fill='white'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap">
+  <link rel="stylesheet" href="/web/estilos.css">
+</head>
+<body>
+  <header class="barra">
+    <div class="contenedor barra-interior">
+      <a class="marca" href="/">
+        <span class="marca-icono" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M4 5h16v10h-9l-5 4v-4H4z" fill="currentColor"/></svg>
+        </span>
+        Polaridad docente
+      </a>
+      <span class="estado-api" id="estado-api"><span class="punto"></span>Conectando…</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="contenedor hero-interior">
+        <div class="hero-texto">
+          <p class="eyebrow">Evaluación de la docencia</p>
+          <h1>Polaridad de comentarios para docentes</h1>
+          <p class="lead">
+            Analiza lo que tus estudiantes escriben sobre el curso. Cada comentario se clasifica
+            como <b class="t-positivo">positivo</b>, <b class="t-neutral">neutral</b> o
+            <b class="t-negativo">negativo</b>, con la probabilidad de cada clase.
+          </p>
+          <ul class="chips-metricas" id="metricas" aria-label="Métricas del modelo"></ul>
+        </div>
+        <img class="hero-ilustracion" src="/web/profesores.svg"
+             alt="Dos docentes frente a un tablero con caras de opinión positiva, neutral y negativa">
+      </div>
+    </section>
+
+    <section class="contenedor">
+      <div class="tarjeta">
+        <div class="pestanas" role="tablist">
+          <button role="tab" id="tab-uno" aria-controls="panel-uno" aria-selected="true">Un comentario</button>
+          <button role="tab" id="tab-csv" aria-controls="panel-csv" aria-selected="false" tabindex="-1">Archivo CSV</button>
+        </div>
+
+        <!-- Un comentario -->
+        <div role="tabpanel" id="panel-uno" aria-labelledby="tab-uno" class="panel">
+          <form id="form-uno" class="columnas">
+            <div>
+              <label for="texto" class="etiqueta">Comentario del estudiante</label>
+              <textarea id="texto" maxlength="5000" rows="6"
+                placeholder="Ej.: El profesor explica muy bien, pero los parciales son muy difíciles."></textarea>
+              <div class="fila-entre">
+                <div class="ejemplos" aria-label="Ejemplos">
+                  <span>Probar con:</span>
+                  <button type="button" class="chip" data-ejemplo="Excelente profesor, las clases son muy claras y aprendí muchísimo.">Positivo</button>
+                  <button type="button" class="chip" data-ejemplo="El curso estuvo bien, aunque algunas partes pudieron ser más detalladas.">Mixto</button>
+                  <button type="button" class="chip" data-ejemplo="Pésimo curso, el profesor no explica y las evaluaciones son injustas.">Negativo</button>
+                </div>
+                <span class="contador" id="contador">0 / 5000</span>
+              </div>
+              <button class="boton" type="submit" id="btn-uno">Analizar comentario</button>
+            </div>
+            <div class="resultado" id="resultado-uno" aria-live="polite">
+              <div class="vacio-estado">
+                <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 10h32v20H22l-10 8v-8H8z" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><path d="M16 18h16M16 23h10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+                <p>Escribe o elige un comentario para ver su polaridad.</p>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- Archivo CSV -->
+        <div role="tabpanel" id="panel-csv" aria-labelledby="tab-csv" class="panel" hidden>
+          <label class="zona-archivo" id="zona-archivo" for="archivo">
+            <input type="file" id="archivo" accept=".csv,text/csv" hidden>
+            <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 32V12m0 0-8 8m8-8 8 8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 30v6a2 2 0 0 0 2 2h24a2 2 0 0 0 2-2v-6" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+            <strong id="nombre-archivo">Arrastra un archivo CSV o haz clic para elegirlo</strong>
+            <span>Separado por <code>;</code> o <code>,</code> · hasta 1000 filas · máx. 5 MB</span>
+          </label>
+
+          <div class="opciones-csv" id="opciones-csv" hidden>
+            <label for="columna" class="etiqueta">Columna con los comentarios</label>
+            <div class="fila">
+              <select id="columna"></select>
+              <button class="boton" id="btn-csv" type="button">Clasificar archivo</button>
+            </div>
+          </div>
+
+          <div id="resultado-csv" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <p class="nota">
+        El modelo acierta en 2 de cada 3 comentarios (macro-F1 ≈ 0.66 en datos no vistos) y se confunde
+        sobre todo entre <i>neutral</i> y las otras clases. Los resultados marcados como
+        <b class="t-ambiguo">ambiguos</b> conviene revisarlos a mano. Úsalo como apoyo, no como decisión final.
+      </p>
+    </section>
+  </main>
+
+  <footer class="pie">
+    <div class="contenedor">Sistemas Inteligentes · Clasificación de la evaluación docente</div>
+  </footer>
+
+  <script src="/web/app.js"></script>
+</body>
+</html>
