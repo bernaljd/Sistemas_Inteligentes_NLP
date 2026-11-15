@@ -70,8 +70,9 @@ docker run -p 8000:8000 -e ADMIN_TOKEN=una-clave-larga -v polaridad_monitoreo:/a
 # http://127.0.0.1:8000
 ```
 
-La imagen trae torch solo CPU y el modelo MiniLM ya descargado: arranca sin internet. Solo copia lo
-necesario para servir (`.dockerignore`), nunca `train.csv` ni `test.csv`.
+La imagen trae torch solo CPU y el modelo MiniLM ya descargado en la **misma revisión** que pide el
+Pipeline (`ARG REVISION_EMBEDDINGS`): arranca sin internet. Solo copia lo necesario para servir
+(`.dockerignore`), nunca `train.csv` ni `test.csv`.
 
 Verificado con la imagen construida (3.05 GB; la primera construcción tarda de 10 a 40 min según la
 conexión): contenedor `healthy`, mismas 123/123 predicciones del paso 7, `/docs` apagado (404), sin

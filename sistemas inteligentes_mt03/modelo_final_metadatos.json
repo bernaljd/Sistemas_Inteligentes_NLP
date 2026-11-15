@@ -1,7 +1,7 @@
 {
   "nombre": "LogReg + TF-IDF+Emb",
-  "version_modelo": "1.0.0",
-  "fecha": "2026-11-14T20:49:00",
+  "version_modelo": "1.1.0",
+  "fecha": "2026-11-15T17:32:32",
   "tarea": "Clasificar la polaridad (negativo, neutral, positivo) de comentarios de estudiantes",
   "entrada": "lista de comentarios en texto original (columna 'feedback'); sin preprocesar",
   "salida": [
@@ -47,6 +47,11 @@
     }
   },
   "parametros": {
+    "pasos_pipeline": [
+      "entrada",
+      "features (tfidf: limpieza + vectorizador | embeddings)",
+      "clf"
+    ],
     "preprocesamiento": "minusculas, sin tildes, sin puntuacion, sin stopwords (pipeline_feedback.py)",
     "stopwords": [
       "a",
@@ -94,6 +99,7 @@
     },
     "embeddings": {
       "modelo": "paraphrase-multilingual-MiniLM-L12-v2",
+      "revision": "e8f8c211226b894fcb81acc59f3b34ba3efd5f42",
       "dimension": 384,
       "normalizados": true,
       "texto": "feedback original"
@@ -132,16 +138,16 @@
   "entrenado_con": "train.csv (491 comentarios); test.csv no se uso para entrenar",
   "versiones": {
     "python": "3.12.5",
-    "sistema": "Windows-11-10.0.26200-SP0",
+    "sistema": "Windows-11-10.0.26300-SP0",
     "scikit-learn": "1.9.1",
     "joblib": "1.6.0",
     "numpy": "2.5.3",
     "pandas": "3.0.6",
     "scipy": "1.18.1",
     "sentence-transformers": "6.2.0",
-    "torch": "2.15.0",
+    "torch": "2.15.0+cpu",
     "transformers": "5.22.1"
   },
   "dependencia_codigo": "pipeline_feedback.py debe estar importable al cargar el .joblib",
-  "sha256_modelo_final.joblib": "49036579fe9e303cb5e8fd2ea8d286d8350897c9d02cfcbb23425398637a956a"
+  "sha256_modelo_final.joblib": "d23e25636db6f58601c5ea35c4f66e3c26df67c42fa7cda88311f8f918fc862b"
 }

@@ -1,4 +1,4 @@
-Python 3.12.5 | carpeta: C:\Users\ANNAGA~1\AppData\Local\Temp\entorno_limpio_7zvztcam
+Python 3.12.5 | carpeta: C:\Users\jeank\AppData\Local\Temp\entorno_limpio_y5cc54vl
 sys.path contiene la carpeta del proyecto: False
 
 ================================================================================
@@ -6,12 +6,14 @@ A. CARGA DEL MODELO
 ================================================================================
   [OK ] Sin pipeline_feedback.py importable -> error claro  -> No module named 'pipeline_feedback'
   [OK ] joblib.load sin avisos de version
-     Modelo: LogReg + TF-IDF+Emb v1.0.0 (2026-11-14T20:49:00)
+     Modelo: LogReg + TF-IDF+Emb v1.1.0 (2026-11-15T17:32:32)
   [OK ] scikit-learn instalado == registrado  -> instalado 1.9.1, registrado 1.9.1
   [OK ] joblib instalado == registrado  -> instalado 1.6.0, registrado 1.6.0
   [OK ] numpy instalado == registrado  -> instalado 2.5.3, registrado 2.5.3
   [OK ] sentence-transformers instalado == registrado  -> instalado 6.2.0, registrado 6.2.0
   [OK ] Clases del modelo  -> ['negativo', 'neutral', 'positivo']
+  [OK ] Pipeline unico: entrada -> features -> clf  -> ['entrada', 'features', 'clf']
+  [OK ] Embeddings con revision fijada  -> paraphrase-multilingual-MiniLM-L12-v2 @ e8f8c211226b
 
 ================================================================================
 B. COHERENCIA DE LAS PREDICCIONES (123 comentarios de test)
@@ -44,7 +46,8 @@ D. ERRORES DE ENTRADA
   [OK ] diccionario -> TypeError claro  -> TypeError: Se esperaba texto (str) y se recibio dict: {'texto': 'hola'}
   [OK ] lista anidada -> TypeError claro  -> TypeError: Se esperaba texto (str) y se recibio list: ['bueno']
   [OK ] String suelto (no lista) se acepta  -> -> positivo
-     (pipeline.predict con string suelto: devuelve 12 predicciones (una por caracter): error silencioso -> usar predecir())
+  [OK ] pipeline.predict con string suelto -> 1 prediccion  -> 1 prediccion(es)
+  [OK ] pipeline.predict con numero -> TypeError claro  -> TypeError: Se esperaba texto (str) y se recibio int: 123
   [OK ] Lista vacia -> DataFrame vacio
   [OK ] Mayusculas, emojis y tildes no rompen  -> ['positivo', 'negativo']
 
@@ -74,10 +77,10 @@ E. COMENTARIOS CLAROS Y AMBIGUOS
 ================================================================================
 RESUMEN
 ================================================================================
-  A: 7/7 pruebas OK
+  A: 9/9 pruebas OK
   B: 7/7 pruebas OK
   C: 8/8 pruebas OK
-  D: 6/6 pruebas OK
+  D: 8/8 pruebas OK
   E: 2/2 pruebas OK
 
-  TOTAL: 30/30
+  TOTAL: 34/34

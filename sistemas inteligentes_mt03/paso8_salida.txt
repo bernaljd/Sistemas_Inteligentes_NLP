@@ -30,7 +30,8 @@ Elegido por macro-F1 de validacion cruzada: LogReg + TF-IDF+Emb
 ================================================================================
 3. ENTRENAMIENTO DEL PIPELINE COMPLETO (solo train)
 ================================================================================
-Pipeline(steps=[('features',
+Pipeline(steps=[('entrada', EntradaTexto()),
+                ('features',
                  FeatureUnion(transformer_list=[('tfidf',
                                                  Pipeline(steps=[('limpieza',
                                                                   LimpiadorTexto()),
@@ -49,8 +50,9 @@ Calculando embeddings y entrenando...
 ================================================================================
 4. VERIFICACION CONTRA modelo_paso6.joblib
 ================================================================================
+  Modelo de embeddings: paraphrase-multilingual-MiniLM-L12-v2 @ e8f8c211226b
   Embeddings train vs embeddings_train.npy: coseno min = 1.000000
-  Diferencia max. de probabilidades en test: 4.79e-07
+  Diferencia max. de probabilidades en test: 2.76e-05
   Predicciones iguales a las del paso 7: 123/123
   Macro-F1 test = 0.6645 (paso 7: 0.6645)
 
@@ -58,14 +60,14 @@ Calculando embeddings y entrenando...
 5. GUARDADO
 ================================================================================
   python                 3.12.5
-  sistema                Windows-11-10.0.26200-SP0
+  sistema                Windows-11-10.0.26300-SP0
   scikit-learn           1.9.1
   joblib                 1.6.0
   numpy                  2.5.3
   pandas                 3.0.6
   scipy                  1.18.1
   sentence-transformers  6.2.0
-  torch                  2.15.0
+  torch                  2.15.0+cpu
   transformers           5.22.1
 
 Guardados: modelo_final.joblib (92 KB), modelo_final_metadatos.json,

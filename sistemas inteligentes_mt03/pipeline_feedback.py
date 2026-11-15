@@ -6,10 +6,12 @@ modelo_final.joblib: joblib/pickle guarda las clases propias por referencia
 (nombre del modulo + nombre de la clase), no su codigo.
 
 Contiene:
+  - EntradaTexto                   : primer paso del Pipeline; acepta un string
+    suelto o una lista y convierte None/NaN en "" (rechaza otros tipos).
   - limpiar_texto / LimpiadorTexto : reproduce EXACTAMENTE la columna texto_limpio
     de feedback_preprocesado.csv (verificado: 614 de 614 coincidencias).
   - EmbeddingsMiniLM               : texto original -> embedding de 384 dim.
-    (mismo modelo y parametros que el paso 4).
+    (mismo modelo y parametros que el paso 4, revision de Hugging Face fijada).
   - construir_pipeline             : Pipeline completo texto crudo -> polaridad.
   - predecir                       : uso recomendado en produccion; valida la
     entrada y marca textos vacios y predicciones ambiguas.
@@ -26,6 +28,11 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import FeatureUnion, Pipeline
 
 MODELO_EMBEDDINGS = "paraphrase-multilingual-MiniLM-L12-v2"
+# Commit exacto del modelo en Hugging Face. Sin fijarlo, SentenceTransformer
+# descarga la ultima version publicada y el Pipeline podria cambiar de
+# comportamiento sin que cambie el .joblib. Verificado: esta revision reproduce
+# embeddings_train.npy del paso 4 (coseno minimo 0.9999998).
+REVISION_EMBEDDINGS = "e8f8c211226b894fcb81acc59f3b34ba3efd5f42"
 CLASES = ["negativo", "neutral", "positivo"]
 
 # Palabras que el preprocesado original elimino. Se dedujeron de los datos: son
@@ -47,6 +54,31 @@ def _a_texto(t):
     if not isinstance(t, str):
         raise TypeError(f"Se esperaba texto (str) y se recibio {type(t).__name__}: {t!r}")
     return t
+
+
+def _a_lista(X):
+    """Un string suelto es UN comentario (no una secuencia de caracteres)."""
+    if isinstance(X, str):
+        return [X]
+    if isinstance(X, (pd.DataFrame, pd.Series)) or hasattr(X, "tolist"):
+        X = X.squeeze().tolist() if isinstance(X, pd.DataFrame) else X.tolist()
+        return [X] if isinstance(X, str) else list(X)
+    return list(X)
+
+
+class EntradaTexto(BaseEstimator, TransformerMixin):
+    """Primer paso del Pipeline: normaliza la entrada antes de las dos ramas.
+
+    - "un comentario"            -> ["un comentario"]  (antes: 1 prediccion por caracter)
+    - None / NaN                 -> ""
+    - numeros, dicts, listas     -> TypeError claro
+    """
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        return [_a_texto(t) for t in _a_lista(X)]
 
 
 def limpiar_texto(texto):
@@ -74,14 +106,15 @@ class EmbeddingsMiniLM(BaseEstimator, TransformerMixin):
     descargandolo. Por eso el entorno de destino necesita sentence-transformers.
     """
 
-    def __init__(self, nombre_modelo=MODELO_EMBEDDINGS, batch_size=32):
+    def __init__(self, nombre_modelo=MODELO_EMBEDDINGS, revision=REVISION_EMBEDDINGS, batch_size=32):
         self.nombre_modelo = nombre_modelo
+        self.revision = revision
         self.batch_size = batch_size
 
     def _modelo(self):
         if getattr(self, "_st", None) is None:
             from sentence_transformers import SentenceTransformer
-            self._st = SentenceTransformer(self.nombre_modelo)
+            self._st = SentenceTransformer(self.nombre_modelo, revision=self.revision)
         return self._st
 
     def fit(self, X, y=None):
@@ -100,8 +133,13 @@ class EmbeddingsMiniLM(BaseEstimator, TransformerMixin):
 
 def construir_pipeline(C=10, ngram_range=(1, 2), min_df=2):
     """Misma arquitectura e hiperparametros que el modelo elegido en el paso 6
-    (LogReg + TF-IDF+Emb), pero recibiendo el comentario original sin preparar."""
+    (LogReg + TF-IDF+Emb), pero recibiendo el comentario original sin preparar.
+
+    Pipeline UNICO con todas las transformaciones (nada se hace fuera de el):
+        entrada -> features = [limpieza -> TF-IDF] + [embeddings MiniLM] -> clf
+    """
     return Pipeline([
+        ("entrada", EntradaTexto()),
         ("features", FeatureUnion([
             ("tfidf", Pipeline([
                 ("limpieza", LimpiadorTexto()),

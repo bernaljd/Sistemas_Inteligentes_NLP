@@ -17,9 +17,12 @@ COPY requirements_modelo.txt requirements_app.txt ./
 RUN pip install -r requirements_app.txt
 
 # Descargar el modelo de embeddings DURANTE la construccion: el contenedor
-# arranca sin internet y siempre con la misma version del modelo
+# arranca sin internet (HF_HUB_OFFLINE=1). Debe ser la MISMA revision que pide
+# el Pipeline (REVISION_EMBEDDINGS en pipeline_feedback.py; test_api.py lo
+# comprueba): si se descargara otra, el contenedor no encontraria la del modelo.
+ARG REVISION_EMBEDDINGS=e8f8c211226b894fcb81acc59f3b34ba3efd5f42
 RUN python -c "from sentence_transformers import SentenceTransformer; \
-SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')"
+SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2', revision='${REVISION_EMBEDDINGS}')"
 
 # Solo lo necesario para servir (nada de train/test ni scripts de entrenamiento)
 COPY api.py pipeline_feedback.py monitoreo.py modelo_final.joblib ./

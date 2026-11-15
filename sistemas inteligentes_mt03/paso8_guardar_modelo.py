@@ -10,7 +10,9 @@ Paso 8: Seleccionar el mejor modelo y guardarlo con joblib.
      necesarias para detectar comentarios ambiguos; LinearSVC no.
 
 2. GUARDADO: un Pipeline COMPLETO que recibe el comentario original:
-       texto -> [limpieza -> TF-IDF] + [embeddings MiniLM] -> LogisticRegression
+       texto -> entrada -> [limpieza -> TF-IDF] + [embeddings MiniLM] -> LogisticRegression
+   (el paso "entrada" acepta un string suelto y convierte None/NaN en ""; el
+   modelo de embeddings queda fijado a una revision exacta de Hugging Face).
    modelo_paso6.joblib necesitaba recibir texto_limpio y los 384 embeddings ya
    calculados; este no necesita ningun preprocesamiento externo.
    Se entrena solo con train.csv (igual que en el paso 6), asi las metricas de
@@ -37,12 +39,12 @@ import joblib
 import numpy as np
 import pandas as pd
 
-from pipeline_feedback import (CLASES, MODELO_EMBEDDINGS, STOPWORDS, UMBRAL_CONFIANZA,
-                               construir_pipeline, limpiar_texto)
+from pipeline_feedback import (CLASES, MODELO_EMBEDDINGS, REVISION_EMBEDDINGS, STOPWORDS,
+                               UMBRAL_CONFIANZA, construir_pipeline, limpiar_texto)
 
 CARPETA = Path(__file__).resolve().parent
 ETIQUETA = "polaridad_basica"
-VERSION_MODELO = "1.0.0"
+VERSION_MODELO = "1.1.0"  # 1.1.0: paso "entrada" + revision de embeddings fijada
 
 
 class Duplicar:
@@ -154,6 +156,7 @@ assert list(pipeline.classes_) == CLASES
 
 titulo("4. VERIFICACION CONTRA modelo_paso6.joblib")
 emb_pipe = pipeline.named_steps["features"].transformer_list[1][1].transform(X_train)
+print(f"  Modelo de embeddings: {MODELO_EMBEDDINGS} @ {REVISION_EMBEDDINGS[:12]}")
 cos = np.sum(emb_pipe * np.load(CARPETA / "embeddings_train.npy"), axis=1)
 print(f"  Embeddings train vs embeddings_train.npy: coseno min = {cos.min():.6f}")
 assert cos.min() > 0.999
@@ -214,12 +217,13 @@ metadatos = {
                            for c in CLASES},
     },
     "parametros": {
+        "pasos_pipeline": ["entrada", "features (tfidf: limpieza + vectorizador | embeddings)", "clf"],
         "preprocesamiento": "minusculas, sin tildes, sin puntuacion, sin stopwords (pipeline_feedback.py)",
         "stopwords": sorted(STOPWORDS),
         "tfidf": {"ngram_range": list(params["prep__tfidf__ngram_range"]),
                   "min_df": params["prep__tfidf__min_df"], "sublinear_tf": True},
-        "embeddings": {"modelo": MODELO_EMBEDDINGS, "dimension": 384, "normalizados": True,
-                       "texto": "feedback original"},
+        "embeddings": {"modelo": MODELO_EMBEDDINGS, "revision": REVISION_EMBEDDINGS,
+                       "dimension": 384, "normalizados": True, "texto": "feedback original"},
         "clasificador": {"tipo": "LogisticRegression", "C": params["clf__C"],
                          "class_weight": "balanced", "max_iter": 5000},
         "umbral_ambiguo": UMBRAL_CONFIANZA,
@@ -241,7 +245,8 @@ with open(CARPETA / "requirements_modelo.txt", "w", encoding="utf-8") as f:
     f.write("# scikit-learn debe ser EXACTAMENTE esta version para cargar el modelo sin riesgos\n")
     for p in paquetes:
         if p in versiones:
-            f.write(f"{p}=={versiones[p]}\n")
+            # sin etiqueta local (+cpu, +cu121): la variante de torch la elige el Dockerfile
+            f.write(f"{p}=={versiones[p].split('+')[0]}\n")
 
 tam = (CARPETA / "modelo_final.joblib").stat().st_size / 1024
 print(f"\nGuardados: modelo_final.joblib ({tam:.0f} KB), modelo_final_metadatos.json,")

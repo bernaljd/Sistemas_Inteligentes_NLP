@@ -176,6 +176,14 @@ def test_dockerfile_no_confia_en_x_forwarded_for():
     assert "--proxy-headers" not in cmd and "forwarded-allow-ips" not in cmd
 
 
+def test_dockerfile_descarga_la_misma_revision_de_embeddings():
+    # El contenedor no tiene internet: debe traer exactamente la revision del Pipeline
+    from pipeline_feedback import MODELO_EMBEDDINGS, REVISION_EMBEDDINGS
+    docker = Path("Dockerfile").read_text(encoding="utf-8")
+    assert f"ARG REVISION_EMBEDDINGS={REVISION_EMBEDDINGS}" in docker
+    assert f"SentenceTransformer('{MODELO_EMBEDDINGS}', revision='${{REVISION_EMBEDDINGS}}')" in docker
+
+
 def test_limite_de_peticiones_429():
     original = api.limitador
     api.limitador = api.LimitadorPeticiones(maximo=3)

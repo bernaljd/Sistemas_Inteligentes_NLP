@@ -124,6 +124,12 @@ def validar():
         check("A", f"{p} instalado == registrado", inst == meta["versiones"][p],
               f"instalado {inst}, registrado {meta['versiones'][p]}")
     check("A", "Clases del modelo", list(modelo.classes_) == meta["salida"], str(list(modelo.classes_)))
+    # Pipeline unificado: todas las transformaciones viajan dentro del mismo objeto
+    pasos = list(modelo.named_steps)
+    check("A", "Pipeline unico: entrada -> features -> clf", pasos == ["entrada", "features", "clf"], str(pasos))
+    emb = modelo.named_steps["features"].transformer_list[1][1]
+    check("A", "Embeddings con revision fijada", emb.revision == meta["parametros"]["embeddings"]["revision"],
+          f"{emb.nombre_modelo} @ {emb.revision[:12]}")
 
     from pipeline_feedback import CLASES, predecir  # noqa: E402
 
@@ -183,12 +189,16 @@ def validar():
     r = predecir(modelo, "El profesor explica muy bien y con paciencia.")
     check("D", "String suelto (no lista) se acepta", len(r) == 1 and pd.notna(r["prediccion"].iloc[0]),
           f"-> {r['prediccion'].iloc[0]}")
+    # El paso "entrada" del Pipeline trata un string suelto como UN comentario
+    # (en la version 1.0.0 devolvia una prediccion por caracter).
     try:
         n = len(modelo.predict("texto suelto"))
-        det = f"devuelve {n} predicciones (una por caracter): error silencioso -> usar predecir()"
+        det = f"{n} prediccion(es)"
     except Exception as e:
-        det = f"{type(e).__name__}: {str(e)[:70]}"
-    print(f"     (pipeline.predict con string suelto: {det})")
+        n, det = -1, f"{type(e).__name__}: {str(e)[:70]}"
+    check("D", "pipeline.predict con string suelto -> 1 prediccion", n == 1, det)
+    ok, det = lanza(lambda: modelo.predict([123]), TypeError)
+    check("D", "pipeline.predict con numero -> TypeError claro", ok, det)
     r = predecir(modelo, [])
     check("D", "Lista vacia -> DataFrame vacio", len(r) == 0)
     r = predecir(modelo, ["ExCeLeNtE  PROFESOR!!!  explica MUY bien 😀😀", "pésimo, no aprendí nada"])
