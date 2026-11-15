@@ -1,0 +1,17 @@
+texto;estado;prediccion;confianza;prob_negativo;prob_neutral;prob_positivo;grupo
+;texto_vacio;;;;;;C vacio
+   ;texto_vacio;;;;;;C vacio
+"
+	";texto_vacio;;;;;;C vacio
+!!! ... ???;texto_vacio;;;;;;C vacio
+el de la que y;texto_vacio;;;;;;C vacio
+Excelente profesor, las clases son muy claras y aprendi muchisimo.;ok;positivo;0.936;0.008;0.056;0.936;E claro
+El curso me encanto, muy bien organizado y util.;ok;positivo;0.956;0.0;0.044;0.956;E claro
+Pesimo curso, el profesor no explica y las evaluaciones son injustas.;ok;negativo;0.984;0.984;0.016;0.0;E claro
+Muy desorganizado, no aprendi nada y nunca respondia dudas.;ok;neutral;0.687;0.306;0.687;0.007;E claro
+El profesor sabe mucho, pero los parciales son injustos.;ok;negativo;0.971;0.971;0.026;0.003;E mixto
+Algunas clases fueron buenas y otras muy aburridas.;ok;negativo;0.509;0.509;0.478;0.014;E mixto
+El curso es normal.;ok;neutral;0.852;0.009;0.852;0.139;E mixto
+No estuvo mal, aunque podria mejorar.;ok;neutral;0.748;0.019;0.748;0.232;E mixto
+Interesante pero demasiado teorico, no se si lo recomendaria.;ambiguo;negativo;0.453;0.453;0.284;0.263;E mixto
+ok;ambiguo;positivo;0.457;0.216;0.327;0.457;E mixto

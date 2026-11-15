@@ -1,0 +1,147 @@
+{
+  "nombre": "LogReg + TF-IDF+Emb",
+  "version_modelo": "1.0.0",
+  "fecha": "2026-11-14T20:49:00",
+  "tarea": "Clasificar la polaridad (negativo, neutral, positivo) de comentarios de estudiantes",
+  "entrada": "lista de comentarios en texto original (columna 'feedback'); sin preprocesar",
+  "salida": [
+    "negativo",
+    "neutral",
+    "positivo"
+  ],
+  "seleccion": {
+    "criterio": "mayor macro-F1 en validacion cruzada estratificada 5-fold (paso 6); test solo para confirmar",
+    "justificacion": [
+      "vs SVM + TF-IDF+Emb: diferencia IC 95% [-0.029, +0.033] -> no concluyente (IC incluye 0)",
+      "vs SVM + Embeddings: diferencia IC 95% [-0.094, +0.041] -> no concluyente (IC incluye 0)",
+      "vs Dummy (clase mayoritaria): diferencia IC 95% [+0.367, +0.558] -> el elegido es mejor",
+      "vs Dummy (aleatorio estratificado): diferencia IC 95% [+0.190, +0.450] -> el elegido es mejor",
+      "Regresion logistica: entrega probabilidades (predict_proba) para detectar ambiguos."
+    ]
+  },
+  "metricas": {
+    "macro_f1_cv": 0.714,
+    "macro_f1_cv_desv": 0.042,
+    "macro_f1_test": 0.6644778255770522,
+    "macro_f1_test_ic95": [
+      0.5708,
+      0.7478
+    ],
+    "accuracy_test": 0.6666666666666666,
+    "por_clase_test": {
+      "negativo": {
+        "precision": 0.7442,
+        "recall": 0.7805,
+        "f1": 0.7619
+      },
+      "neutral": {
+        "precision": 0.6275,
+        "recall": 0.6154,
+        "f1": 0.6214
+      },
+      "positivo": {
+        "precision": 0.6207,
+        "recall": 0.6,
+        "f1": 0.6102
+      }
+    }
+  },
+  "parametros": {
+    "preprocesamiento": "minusculas, sin tildes, sin puntuacion, sin stopwords (pipeline_feedback.py)",
+    "stopwords": [
+      "a",
+      "al",
+      "como",
+      "con",
+      "de",
+      "del",
+      "el",
+      "en",
+      "es",
+      "esta",
+      "estas",
+      "este",
+      "estos",
+      "fue",
+      "ha",
+      "he",
+      "la",
+      "las",
+      "lo",
+      "los",
+      "me",
+      "mi",
+      "mis",
+      "o",
+      "para",
+      "por",
+      "que",
+      "se",
+      "su",
+      "sus",
+      "un",
+      "una",
+      "unas",
+      "y"
+    ],
+    "tfidf": {
+      "ngram_range": [
+        1,
+        2
+      ],
+      "min_df": 2,
+      "sublinear_tf": true
+    },
+    "embeddings": {
+      "modelo": "paraphrase-multilingual-MiniLM-L12-v2",
+      "dimension": 384,
+      "normalizados": true,
+      "texto": "feedback original"
+    },
+    "clasificador": {
+      "tipo": "LogisticRegression",
+      "C": 10,
+      "class_weight": "balanced",
+      "max_iter": 5000
+    },
+    "umbral_ambiguo": 0.5
+  },
+  "datos": {
+    "train.csv": {
+      "sha256": "7604d4bf48dfa2c60be01851ad23245be03d00f51006703b5f37b4b9b48778f1",
+      "filas": 491,
+      "clases": {
+        "negativo": 163,
+        "neutral": 206,
+        "positivo": 122
+      }
+    },
+    "test.csv": {
+      "sha256": "9689b878fca098af8955035080aa9cc87c9d2b2eeab818c0b60030e8c08a26a0",
+      "filas": 123,
+      "clases": {
+        "negativo": 41,
+        "neutral": 52,
+        "positivo": 30
+      }
+    },
+    "feedback_preprocesado.csv": {
+      "sha256": "35151389268044d9603833c5ae2252a9085d22151609192416d4ab3ec578daaf"
+    }
+  },
+  "entrenado_con": "train.csv (491 comentarios); test.csv no se uso para entrenar",
+  "versiones": {
+    "python": "3.12.5",
+    "sistema": "Windows-11-10.0.26200-SP0",
+    "scikit-learn": "1.9.1",
+    "joblib": "1.6.0",
+    "numpy": "2.5.3",
+    "pandas": "3.0.6",
+    "scipy": "1.18.1",
+    "sentence-transformers": "6.2.0",
+    "torch": "2.15.0",
+    "transformers": "5.22.1"
+  },
+  "dependencia_codigo": "pipeline_feedback.py debe estar importable al cargar el .joblib",
+  "sha256_modelo_final.joblib": "49036579fe9e303cb5e8fd2ea8d286d8350897c9d02cfcbb23425398637a956a"
+}

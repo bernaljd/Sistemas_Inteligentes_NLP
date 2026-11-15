@@ -1,0 +1,72 @@
+
+================================================================================
+1. SELECCION DEL MEJOR MODELO
+================================================================================
+                         modelo                     rol  macro_f1_cv  macro_f1_cv_desv  macro_f1_test  macro_f1_test_ic95_inf  macro_f1_test_ic95_sup  accuracy_test  dif_principal_menos_este_ic95_inf  dif_principal_menos_este_ic95_sup
+            LogReg + TF-IDF+Emb               principal        0.714             0.042          0.664                   0.571                   0.748          0.667                                NaN                                NaN
+               SVM + TF-IDF+Emb candidato (comparacion)        0.703             0.040          0.664                   0.576                   0.747          0.667                             -0.029                              0.033
+               SVM + Embeddings candidato (comparacion)        0.700             0.030          0.691                   0.607                   0.769          0.699                             -0.094                              0.041
+      Dummy (clase mayoritaria)              linea base        0.197             0.001          0.198                   0.167                   0.224          0.423                              0.368                              0.558
+Dummy (aleatorio estratificado)              linea base        0.301             0.051          0.338                   0.254                   0.425          0.358                              0.190                              0.450
+
+Elegido por macro-F1 de validacion cruzada: LogReg + TF-IDF+Emb
+  CV:   0.714 +/- 0.042
+  Test: 0.664  IC 95% [0.571, 0.748]  accuracy 0.667
+  vs SVM + TF-IDF+Emb: diferencia IC 95% [-0.029, +0.033] -> no concluyente (IC incluye 0)
+  vs SVM + Embeddings: diferencia IC 95% [-0.094, +0.041] -> no concluyente (IC incluye 0)
+  vs Dummy (clase mayoritaria): diferencia IC 95% [+0.367, +0.558] -> el elegido es mejor
+  vs Dummy (aleatorio estratificado): diferencia IC 95% [+0.190, +0.450] -> el elegido es mejor
+  Ademas, la regresion logistica da probabilidades -> permite marcar comentarios ambiguos.
+
+================================================================================
+2. DATOS
+================================================================================
+  Limpieza reproduce texto_limpio en train: 491/491
+  Limpieza reproduce texto_limpio en test: 123/123
+  train.csv                  sha256 7604d4bf48dfa2c6...  {'negativo': 163, 'neutral': 206, 'positivo': 122}
+  test.csv                   sha256 9689b878fca098af...  {'negativo': 41, 'neutral': 52, 'positivo': 30}
+  feedback_preprocesado.csv  sha256 35151389268044d9...  
+
+================================================================================
+3. ENTRENAMIENTO DEL PIPELINE COMPLETO (solo train)
+================================================================================
+Pipeline(steps=[('features',
+                 FeatureUnion(transformer_list=[('tfidf',
+                                                 Pipeline(steps=[('limpieza',
+                                                                  LimpiadorTexto()),
+                                                                 ('vectorizador',
+                                                                  TfidfVectorizer(min_df=2,
+                                                                                  ngram_range=(1,
+                                                                                               2),
+                                                                                  sublinear_tf=True))])),
+                                                ('embeddings',
+                                                 EmbeddingsMiniLM())])),
+                ('clf',
+                 LogisticRegression(C=10, class_weight='balanced',
+                                    max_iter=5000))])
+Calculando embeddings y entrenando...
+
+================================================================================
+4. VERIFICACION CONTRA modelo_paso6.joblib
+================================================================================
+  Embeddings train vs embeddings_train.npy: coseno min = 1.000000
+  Diferencia max. de probabilidades en test: 4.79e-07
+  Predicciones iguales a las del paso 7: 123/123
+  Macro-F1 test = 0.6645 (paso 7: 0.6645)
+
+================================================================================
+5. GUARDADO
+================================================================================
+  python                 3.12.5
+  sistema                Windows-11-10.0.26200-SP0
+  scikit-learn           1.9.1
+  joblib                 1.6.0
+  numpy                  2.5.3
+  pandas                 3.0.6
+  scipy                  1.18.1
+  sentence-transformers  6.2.0
+  torch                  2.15.0
+  transformers           5.22.1
+
+Guardados: modelo_final.joblib (92 KB), modelo_final_metadatos.json,
+           requirements_modelo.txt, paso8_salida.txt

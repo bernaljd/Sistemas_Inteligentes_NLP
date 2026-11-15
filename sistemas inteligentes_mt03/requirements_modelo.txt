@@ -1,0 +1,10 @@
+# Versiones con las que se guardo modelo_final.joblib (Python 3.12.5)
+# scikit-learn debe ser EXACTAMENTE esta version para cargar el modelo sin riesgos
+scikit-learn==1.9.1
+joblib==1.6.0
+numpy==2.5.3
+pandas==3.0.6
+scipy==1.18.1
+sentence-transformers==6.2.0
+torch==2.15.0
+transformers==5.22.1

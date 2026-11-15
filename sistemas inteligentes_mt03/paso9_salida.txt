@@ -1,0 +1,83 @@
+Python 3.12.5 | carpeta: C:\Users\ANNAGA~1\AppData\Local\Temp\entorno_limpio_7zvztcam
+sys.path contiene la carpeta del proyecto: False
+
+================================================================================
+A. CARGA DEL MODELO
+================================================================================
+  [OK ] Sin pipeline_feedback.py importable -> error claro  -> No module named 'pipeline_feedback'
+  [OK ] joblib.load sin avisos de version
+     Modelo: LogReg + TF-IDF+Emb v1.0.0 (2026-11-14T20:49:00)
+  [OK ] scikit-learn instalado == registrado  -> instalado 1.9.1, registrado 1.9.1
+  [OK ] joblib instalado == registrado  -> instalado 1.6.0, registrado 1.6.0
+  [OK ] numpy instalado == registrado  -> instalado 2.5.3, registrado 2.5.3
+  [OK ] sentence-transformers instalado == registrado  -> instalado 6.2.0, registrado 6.2.0
+  [OK ] Clases del modelo  -> ['negativo', 'neutral', 'positivo']
+
+================================================================================
+B. COHERENCIA DE LAS PREDICCIONES (123 comentarios de test)
+================================================================================
+  [OK ] Predicciones = paso 7  -> 123/123
+  [OK ] Macro-F1 = registrado  -> 0.6645 vs 0.6645
+  [OK ] Probabilidades suman 1
+  [OK ] Determinista (2a ejecucion igual)
+  [OK ] Lote = uno a uno  -> dif max 1.9e-07
+  [OK ] No depende del orden
+  [OK ] predecir() coincide con pipeline.predict
+
+================================================================================
+C. TEXTOS VACIOS
+================================================================================
+  [OK ] ''                 -> estado=texto_vacio
+  [OK ] '   '              -> estado=texto_vacio
+  [OK ] '\n\t'             -> estado=texto_vacio
+  [OK ] None               -> estado=texto_vacio
+  [OK ] nan                -> estado=texto_vacio
+  [OK ] '!!! ... ???'      -> estado=texto_vacio
+  [OK ] 'el de la que y'   -> estado=texto_vacio
+     (pipeline.predict sin validar devuelve ['negativo', 'negativo'] para textos vacios: prediccion sin sentido -> usar predecir())
+  [OK ] Vacios mezclados con validos no afectan a los validos
+
+================================================================================
+D. ERRORES DE ENTRADA
+================================================================================
+  [OK ] numero -> TypeError claro  -> TypeError: Se esperaba texto (str) y se recibio int: 123
+  [OK ] diccionario -> TypeError claro  -> TypeError: Se esperaba texto (str) y se recibio dict: {'texto': 'hola'}
+  [OK ] lista anidada -> TypeError claro  -> TypeError: Se esperaba texto (str) y se recibio list: ['bueno']
+  [OK ] String suelto (no lista) se acepta  -> -> positivo
+     (pipeline.predict con string suelto: devuelve 12 predicciones (una por caracter): error silencioso -> usar predecir())
+  [OK ] Lista vacia -> DataFrame vacio
+  [OK ] Mayusculas, emojis y tildes no rompen  -> ['positivo', 'negativo']
+
+================================================================================
+E. COMENTARIOS CLAROS Y AMBIGUOS
+================================================================================
+  Comentarios claros (informativo):
+    [acierta] Excelente profesor, las clases son muy claras y aprendi -> positivo (0.94)
+    [acierta] El curso me encanto, muy bien organizado y util.        -> positivo (0.96)
+    [acierta] Pesimo curso, el profesor no explica y las evaluaciones -> negativo (0.98)
+    [ERROR DEL MODELO] Muy desorganizado, no aprendi nada y nunca respondia du -> neutral (0.69), esperado negativo
+  [OK ] Casos claros: mayoria correcta  -> 3/4
+
+  Comentarios mixtos (informativo):
+    El profesor sabe mucho, pero los parciales son injustos -> negativo  [ok     ] neg=0.97 neu=0.03 pos=0.00
+    Algunas clases fueron buenas y otras muy aburridas.     -> negativo  [ok     ] neg=0.51 neu=0.48 pos=0.01
+    El curso es normal.                                     -> neutral   [ok     ] neg=0.01 neu=0.85 pos=0.14
+    No estuvo mal, aunque podria mejorar.                   -> neutral   [ok     ] neg=0.02 neu=0.75 pos=0.23
+    Interesante pero demasiado teorico, no se si lo recomen -> negativo  [ambiguo] neg=0.45 neu=0.28 pos=0.26
+    ok                                                      -> positivo  [ambiguo] neg=0.22 neu=0.33 pos=0.46
+  [OK ] Confianza media: claros > mixtos  -> 0.89 vs 0.66
+
+  En test, segun el umbral fijo de 0.5 (no ajustado con test):
+    ambiguo  n =   8  accuracy = 0.500
+    ok       n = 115  accuracy = 0.678
+
+================================================================================
+RESUMEN
+================================================================================
+  A: 7/7 pruebas OK
+  B: 7/7 pruebas OK
+  C: 8/8 pruebas OK
+  D: 6/6 pruebas OK
+  E: 2/2 pruebas OK
+
+  TOTAL: 30/30
