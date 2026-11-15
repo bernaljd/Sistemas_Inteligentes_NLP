@@ -1,0 +1,15 @@
+prueba;n;media_ms;p50_ms;p95_ms;p99_ms;ms_por_comentario;comentarios_por_s;medido;objetivo;cumple
+un comentario;1.0;497.73;343.26;1075.65;3027.88;;;;;
+comentario de 5000 caracteres;1.0;517.08;518.57;;;;;;;
+lote;1.0;228.88;;;;228.88;4.37;;;
+lote;10.0;1389.81;;;;138.98;7.2;;;
+lote;50.0;7051.2;;;;141.02;7.09;;;
+lote;100.0;15848.87;;;;158.49;6.31;;;
+lote;500.0;87284.18;;;;174.57;5.73;;;
+lote;1000.0;53060.96;;;;53.06;18.85;;;
+csv;1000.0;92847.92;;;;;;;;
+objetivo: p95 un comentario (ms);;;;;;;;1075.65;500.0;False
+objetivo: lote de 100 (s);;;;;;;;15.85;5.0;False
+objetivo: CSV de 1000 filas (s);;;;;;;;92.85;60.0;False
+objetivo: arranque (s);;;;;;;;167.31;120.0;False
+objetivo: memoria RSS (MB);;;;;;;;156.72;2048.0;True

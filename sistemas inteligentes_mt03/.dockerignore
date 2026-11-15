@@ -1,0 +1,11 @@
+# La imagen solo necesita lo que copia el Dockerfile; esto evita enviar datos y basura
+*
+!api.py
+!pipeline_feedback.py
+!monitoreo.py
+!modelo_final.joblib
+!requirements_modelo.txt
+!requirements_app.txt
+!web/
+!monitoreo/referencia.json
+web/_prueba*

@@ -1,7 +1,7 @@
-# Pasos 4 y 5: API (FastAPI) + pagina web (carpeta web/, servida por la misma API)
+# Pasos 4-6: API (FastAPI) + pagina web (carpeta web/, servida por la misma API)
 # Ademas de requirements_modelo.txt (versiones exactas del modelo)
 -r requirements_modelo.txt
-fastapi==0.129.0
+fastapi==0.163.0
+starlette==1.10.0   # >= 1.3.1: corrige vulnerabilidades conocidas (pip-audit, paso 6)
 uvicorn==0.41.0
 python-multipart==0.0.33
-httpx==0.28.1  # solo para test_api.py

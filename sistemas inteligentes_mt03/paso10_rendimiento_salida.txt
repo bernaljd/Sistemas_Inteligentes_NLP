@@ -1,0 +1,30 @@
+CPU: Intel64 Family 6 Model 154 Stepping 3, GenuineIntel | nucleos logicos: 12 | RAM: 7.7 GB | Python 3.12.5
+Tamano de modelo_final.joblib: 92 KB (+ ~470 MB del modelo MiniLM en la cache de Hugging Face)
+
+1. Arranque (importar + cargar + calentar): 167.3 s | memoria 75 -> 284 MB
+
+2. Un comentario (300 peticiones): media 498 ms | p50 343 | p95 1076 | p99 3028 | max 5176 ms
+   Comentario de 5000 caracteres (maximo permitido): mediana 519 ms
+
+3. Lotes:
+       1 comentarios:      229 ms  ( 228.9 ms/comentario,    4.4 comentarios/s)
+      10 comentarios:     1390 ms  ( 139.0 ms/comentario,    7.2 comentarios/s)
+      50 comentarios:     7051 ms  ( 141.0 ms/comentario,    7.1 comentarios/s)
+     100 comentarios:    15849 ms  ( 158.5 ms/comentario,    6.3 comentarios/s)
+     500 comentarios:    87284 ms  ( 174.6 ms/comentario,    5.7 comentarios/s)
+    1000 comentarios:    53061 ms  (  53.1 ms/comentario,   18.8 comentarios/s)
+
+4. CSV de 1000 filas: 92.8 s
+
+5. Memoria RSS: tras cargar 284 MB | tras todas las pruebas 157 MB
+
+======================================================================
+OBJETIVOS DE SERVICIO
+======================================================================
+  p95 un comentario (ms)     medido   1075.6   objetivo <= 500    NO CUMPLE
+  lote de 100 (s)            medido     15.8   objetivo <= 5      NO CUMPLE
+  CSV de 1000 filas (s)      medido     92.8   objetivo <= 60     NO CUMPLE
+  arranque (s)               medido    167.3   objetivo <= 120    NO CUMPLE
+  memoria RSS (MB)           medido    156.7   objetivo <= 2048   CUMPLE
+
+Guardados: resultados_rendimiento.csv, paso10_rendimiento_salida.txt

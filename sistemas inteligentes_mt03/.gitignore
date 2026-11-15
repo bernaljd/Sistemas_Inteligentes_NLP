@@ -1,0 +1,5 @@
+# Registro de monitoreo: datos de uso en produccion, no van al repositorio
+monitoreo/predicciones.jsonl
+__pycache__/
+*.pyc
+.pytest_cache/

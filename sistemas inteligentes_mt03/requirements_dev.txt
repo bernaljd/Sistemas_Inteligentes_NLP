@@ -1,0 +1,5 @@
+# Solo para pruebas y mediciones (no se necesitan en produccion)
+-r requirements_app.txt
+httpx==0.28.1       # TestClient de test_api.py
+psutil==7.2.2       # memoria en paso10_rendimiento.py
+pip-audit==2.10.1   # auditoria de vulnerabilidades

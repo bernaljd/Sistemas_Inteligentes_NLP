@@ -1,15 +1,23 @@
 """
-Pruebas del servicio de prediccion (paso 4).
+Pruebas del servicio de prediccion (pasos 4-6: funcionalidad, seguridad, monitoreo).
 
 Ejecutar:  python -m pytest test_api.py -v
            (o sin pytest: python test_api.py)
 No hace falta tener uvicorn corriendo: TestClient levanta la app en memoria.
 """
 
-import pandas as pd
-from fastapi.testclient import TestClient
+import os
+import tempfile
+from pathlib import Path
 
-from api import MAX_TEXTOS_LOTE, app
+# El registro de monitoreo de las pruebas va a un archivo temporal, no al real
+os.environ["RUTA_REGISTRO"] = str(Path(tempfile.mkdtemp()) / "registro_pruebas.jsonl")
+
+import pandas as pd  # noqa: E402
+from fastapi.testclient import TestClient  # noqa: E402
+
+import api  # noqa: E402
+from api import MAX_TEXTOS_LOTE, app  # noqa: E402
 
 _cliente = None
 
@@ -108,6 +116,90 @@ def test_csv_columna_inexistente_y_archivo_vacio():
     assert r.status_code == 422 and "feedback" in r.json()["detail"]
     r = c.post("/predecir/csv", files={"archivo": ("c.csv", b"", "text/csv")})
     assert r.status_code == 422
+
+
+# ---------------------------------------------------------------------------
+# Seguridad (paso 6)
+# ---------------------------------------------------------------------------
+
+def test_cabeceras_de_seguridad():
+    r = cliente().get("/")
+    h = r.headers
+    assert h["X-Content-Type-Options"] == "nosniff"
+    assert h["X-Frame-Options"] == "DENY"
+    assert "script-src 'self'" in h["Content-Security-Policy"]
+    assert "frame-ancestors 'none'" in h["Content-Security-Policy"]
+    assert h["Referrer-Policy"] == "no-referrer"
+    assert "X-Tiempo-ms" in h
+    assert "access-control-allow-origin" not in {k.lower() for k in h}  # sin CORS abierto
+
+
+def test_html_malicioso_se_devuelve_como_dato():
+    ataque = '<script>alert("x")</script><img src=x onerror=alert(1)>'
+    r = cliente().post("/predecir", json={"texto": ataque})
+    assert r.status_code == 200
+    assert r.headers["content-type"].startswith("application/json")
+    assert r.json()["texto"] == ataque  # se devuelve tal cual; la pagina lo escapa con esc()
+    assert "esc(r.texto)" in Path("web/app.js").read_text(encoding="utf-8")
+
+
+def test_peticion_demasiado_grande_413():
+    r = cliente().post("/predecir/lote", content=b"x" * (7 * 1024 * 1024),
+                       headers={"Content-Type": "application/json"})
+    assert r.status_code == 413
+
+
+def test_limite_de_peticiones_429():
+    original = api.limitador
+    api.limitador = api.LimitadorPeticiones(maximo=3)
+    try:
+        codigos = [cliente().post("/predecir", json={"texto": "Buen curso"}).status_code for _ in range(5)]
+        assert codigos[:3] == [200] * 3 and codigos[3:] == [429, 429], codigos
+        r = cliente().post("/predecir", json={"texto": "Buen curso"})
+        assert int(r.headers["Retry-After"]) > 0
+        assert cliente().get("/salud").status_code == 200  # el limite solo aplica a /predecir*
+    finally:
+        api.limitador = original
+
+
+def test_error_interno_no_filtra_detalles():
+    original = api.estado_servicio["modelo"]
+    class Roto:
+        def predict_proba(self, X):
+            raise RuntimeError("C:/ruta/secreta/modelo.py linea 42")
+    api.estado_servicio["modelo"] = Roto()
+    try:
+        r = TestClient(app, raise_server_exceptions=False).post("/predecir", json={"texto": "hola curso"})
+        assert r.status_code == 500
+        assert "secreta" not in r.text and r.json()["detail"] == "Error interno del servidor"
+    finally:
+        api.estado_servicio["modelo"] = original
+
+
+# ---------------------------------------------------------------------------
+# Monitoreo (paso 6)
+# ---------------------------------------------------------------------------
+
+def test_monitoreo_registra_sin_texto_y_reporta():
+    secreto = "El profesor Perez de Sistemas Operativos explica muy bien"
+    cliente().post("/predecir", json={"texto": secreto})
+    registro = Path(os.environ["RUTA_REGISTRO"]).read_text(encoding="utf-8")
+    assert "Perez" not in registro and '"hash"' in registro  # privacidad: no se guarda el texto
+    test = pd.read_csv("test.csv", sep=";")
+    cliente().post("/predecir/lote", json={"textos": test["feedback"].tolist()})
+    rep = cliente().get("/monitoreo?ultimos=123").json()
+    assert rep["estado"] == "estable", rep["alertas"]
+    assert {"n_palabras", "oov", "confianza", "clases_predichas"} <= set(rep["indicadores"])
+
+
+def test_monitoreo_protegido_con_token():
+    api.ADMIN_TOKEN = "clave-de-prueba"
+    try:
+        assert cliente().get("/monitoreo").status_code == 401
+        assert cliente().get("/monitoreo", headers={"X-Admin-Token": "otra"}).status_code == 401
+        assert cliente().get("/monitoreo", headers={"X-Admin-Token": "clave-de-prueba"}).status_code == 200
+    finally:
+        api.ADMIN_TOKEN = ""
 
 
 if __name__ == "__main__":

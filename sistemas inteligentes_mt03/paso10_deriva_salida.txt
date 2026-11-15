@@ -1,0 +1,73 @@
+================================================================================
+1. REFERENCIA (validacion cruzada 5-fold sobre train)
+================================================================================
+  particion 1: 99 comentarios
+  particion 2: 98 comentarios
+  particion 3: 98 comentarios
+  particion 4: 98 comentarios
+  particion 5: 98 comentarios
+  n_palabras  media 27.949  cortes [18.0, 24.0, 30.0, 38.0]
+  oov         media 0.121  cortes [0.053, 0.091, 0.132, 0.179]
+  confianza   media 0.750  cortes [0.584, 0.707, 0.826, 0.918]
+  clases predichas {'negativo': 0.33, 'neutral': 0.426, 'positivo': 0.244}
+  tasas {'ambiguo': 0.065, 'texto_vacio': 0.0}
+  Guardada: monitoreo/referencia.json
+
+================================================================================
+2. ESCENARIOS
+================================================================================
+
+A. test.csv (sin cambios)  (n = 123)  ->  estado: ESTABLE
+    n_palabras         estable    PSI 0.006  (media 27.95 -> 27.99)
+    oov                estable    PSI 0.091  (media 0.12 -> 0.10)
+    confianza          estable    PSI 0.040  (media 0.75 -> 0.78)
+    clases_predichas   estable    PSI 0.002
+    tasa_ambiguo       estable    0.07 -> 0.07
+    tasa_texto_vacio   estable    0.00 -> 0.00
+
+B. recortados a 4 palabras  (n = 123)  ->  estado: IMPORTANTE
+    n_palabras         importante PSI 7.577  (media 27.95 -> 1.98)
+    oov                importante PSI 6.118  (media 0.12 -> 0.02)
+    confianza          importante PSI 0.438  (media 0.75 -> 0.65)
+    clases_predichas   estable    PSI 0.082
+    tasa_ambiguo       importante 0.07 -> 0.22
+    tasa_texto_vacio   estable    0.00 -> 0.00
+
+C. comentarios en ingles  (n = 120)  ->  estado: IMPORTANTE
+    n_palabras         importante PSI 7.577  (media 27.95 -> 9.55)
+    oov                importante PSI 7.286  (media 0.12 -> 1.00)
+    confianza          estable    PSI 0.093  (media 0.75 -> 0.77)
+    clases_predichas   importante PSI 0.250
+    tasa_ambiguo       estable    0.07 -> 0.10
+    tasa_texto_vacio   estable    0.00 -> 0.00
+
+D. solo negativos  (n = 41)  ->  estado: IMPORTANTE
+    n_palabras         estable    PSI 0.046  (media 27.95 -> 28.32)
+    oov                moderado   PSI 0.183  (media 0.12 -> 0.10)
+    confianza          moderado   PSI 0.154  (media 0.75 -> 0.78)
+    clases_predichas   importante PSI 0.936
+    tasa_ambiguo       estable    0.07 -> 0.10
+    tasa_texto_vacio   estable    0.00 -> 0.00
+
+E. 40% vacios  (n = 123)  ->  estado: IMPORTANTE
+    n_palabras         estable    PSI 0.022  (media 27.95 -> 28.74)
+    oov                estable    PSI 0.078  (media 0.12 -> 0.10)
+    confianza          estable    PSI 0.022  (media 0.75 -> 0.78)
+    clases_predichas   estable    PSI 0.027
+    tasa_ambiguo       estable    0.07 -> 0.03
+    tasa_texto_vacio   importante 0.00 -> 0.37
+
+================================================================================
+RESUMEN
+================================================================================
+                 escenario     estado  psi_n_palabras  psi_oov  psi_confianza  psi_clases_predichas
+ A. test.csv (sin cambios)    estable           0.006    0.091          0.040                 0.002
+B. recortados a 4 palabras importante           7.577    6.118          0.438                 0.082
+  C. comentarios en ingles importante           7.577    7.286          0.093                 0.250
+         D. solo negativos importante           0.046    0.183          0.154                 0.936
+             E. 40% vacios importante           0.022    0.078          0.022                 0.027
+
+  Escenario sin cambios marcado como estable: SI
+  Escenarios con cambios detectados: 4/4
+
+Guardados: monitoreo/referencia.json, resultados_deriva.csv, paso10_deriva_salida.txt
