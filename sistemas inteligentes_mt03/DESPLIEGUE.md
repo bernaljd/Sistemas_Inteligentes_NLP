@@ -7,40 +7,42 @@ en negativo / neutral / positivo con `modelo_final.joblib` (LogReg + TF-IDF + Mi
 
 | Aspecto | Cómo se verifica | Resultado |
 |---|---|---|
-| Funcionalidad | `python test_api.py` (11 pruebas) | 11/11 OK |
-| Seguridad | `python test_api.py` (5 pruebas) + `pip-audit` | 5/5 OK · 0 vulnerabilidades conocidas* |
-| Monitoreo | `python test_api.py` (2 pruebas) + `python paso10_deriva.py` | 2/2 OK · deriva detectada en 4/4 escenarios |
-| Tiempos | `python paso10_rendimiento.py` | ver tabla abajo |
+| Funcionalidad | `python -m pytest test_api.py` (11 pruebas) | 11/11 OK |
+| Seguridad | `python -m pytest test_api.py` (9 pruebas) + `pip-audit` | 9/9 OK · 0 vulnerabilidades conocidas* |
+| Monitoreo | `python -m pytest test_api.py` (2 pruebas) + `python paso10_deriva.py` | 2/2 OK · deriva detectada en 4/4 escenarios |
+| Tiempos | `python paso10_rendimiento.py --url ... --contenedor ...` | ver tabla abajo |
 
 \* `pip-audit` encontró 10 vulnerabilidades en Starlette 0.52.1 (base de FastAPI). Se actualizó a
 FastAPI 0.163.0 + Starlette 1.10.0 y la auditoría quedó limpia.
 
-### Tiempos de inferencia (portátil de desarrollo, CPU, 7.7 GB RAM)
+### Tiempos de inferencia (contenedor Docker local, CPU)
 
-Medido con el equipo bajo presión de memoria (0.5 GB libres), por lo que son cifras pesimistas.
+Medido por HTTP contra el contenedor real (`paso10_rendimiento.py --url`), que es el despliegue,
+en un PC de 16 núcleos lógicos y 31.6 GB de RAM. Objetivos fijados antes de medir.
 
 | Prueba | Medido | Objetivo |
 |---|---|---|
-| Un comentario, modelo aislado (p50 / p95) | ~110 ms / ~155 ms | ≤ 500 ms ✔ |
-| Un comentario vía API con el equipo saturado (p95) | 1076 ms | ≤ 500 ms ✘ |
-| Lote de 100 comentarios | 15.8 s (~80–160 ms por comentario) | ≤ 5 s ✘ |
-| CSV de 1000 filas | 92.8 s | ≤ 60 s ✘ |
-| Arranque (cargar + calentar) | 25–170 s | ≤ 120 s (variable) |
-| Memoria del contenedor Docker (`docker stats`) | ~1 GB | ≤ 2 GB ✔ |
-| Un comentario dentro del contenedor (p50 / p95) | 177 ms / 440 ms | ≤ 500 ms ✔ |
-| Lote de test.csv (123) dentro del contenedor | 19.9 s | — |
+| Un comentario (p50 / p95, 300 peticiones) | 35 ms / 52 ms | ≤ 500 ms ✔ |
+| Comentario de 5000 caracteres (mediana) | 49 ms | — |
+| Lote de 100 comentarios | 1.3 s (~13 ms por comentario) | ≤ 5 s ✔ |
+| CSV de 1000 filas | 11.0 s | ≤ 60 s ✔ |
+| Arranque (cargar + calentar, según `/salud`) | 5.3 s | ≤ 120 s ✔ |
+| Memoria del contenedor (`docker stats`) | 672 MB tras cargar · 860 MB tras las pruebas | ≤ 2 GB ✔ |
 
-(En Windows `psutil` mostró ~300 MB porque el sistema estaba paginando memoria a disco;
-la cifra real es la del contenedor.)
-
-Casi todo el tiempo se va en los embeddings MiniLM; TF-IDF y la regresión logística toman milisegundos.
-Más hilos de torch no ayudan (probado con 1, 2, 4, 6 y 8 hilos). Para un uso interactivo (un docente
-analizando comentarios) el tiempo es aceptable; para lotes grandes conviene un servidor con más RAM.
+Una medición anterior en un portátil con 7.7 GB de RAM y solo 0.5 GB libres (el sistema paginaba a
+disco) dio p95 de 1076 ms, 15.8 s para el lote de 100 y 167 s de arranque: el servicio necesita
+~1 GB de RAM libre. Casi todo el tiempo se va en los embeddings MiniLM; TF-IDF y la regresión
+logística toman milisegundos.
 
 ### Seguridad implementada
 
 - **Límite de peticiones**: 60 por minuto por IP en `/predecir*` → `429` con `Retry-After`.
+  La IP es la de la conexión: uvicorn corre sin `--proxy-headers`, así que una cabecera
+  `X-Forwarded-For` falsa no sirve para saltarse el límite (verificado en el contenedor).
 - **Límites de tamaño**: cuerpo ≤ 6 MB, CSV ≤ 5 MB / 1000 filas, texto ≤ 5000 caracteres, lote ≤ 1000.
+  El cuerpo se mide contando los bytes reales, también con `Transfer-Encoding: chunked`.
+- **Inyección CSV**: al descargar resultados, los comentarios que empiezan por `=`, `+`, `-` o `@`
+  se escriben con `'` delante para que Excel no los ejecute como fórmula.
 - **Cabeceras**: Content-Security-Policy (solo scripts propios), `X-Frame-Options: DENY`,
   `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, `Permissions-Policy`.
 - **XSS**: la página escapa todo texto del usuario (`esc()`) antes de mostrarlo.
@@ -60,29 +62,26 @@ $env:HF_HUB_OFFLINE = "1"; python -m uvicorn api:app --port 8000
 # http://127.0.0.1:8000
 ```
 
-### Docker (cualquier servidor o nube)
+### Docker local (despliegue del proyecto)
 
 ```powershell
 docker build -t polaridad-docente .
 docker run -p 8000:8000 -e ADMIN_TOKEN=una-clave-larga -v polaridad_monitoreo:/app/monitoreo_datos polaridad-docente
+# http://127.0.0.1:8000
 ```
 
 La imagen trae torch solo CPU y el modelo MiniLM ya descargado: arranca sin internet. Solo copia lo
 necesario para servir (`.dockerignore`), nunca `train.csv` ni `test.csv`.
 
-Verificado con la imagen construida (3.05 GB, ~9 min de construcción): contenedor `healthy` en ~40 s,
-mismas 123/123 predicciones del paso 7, `/docs` apagado (404), sin cabecera `Server`, cabeceras de
-seguridad presentes, `/monitoreo` exige token (401 sin él), proceso corriendo como usuario `app`
-(sin privilegios), sin datos de entrenamiento dentro y registro de monitoreo sin textos.
+Verificado con la imagen construida (3.05 GB; la primera construcción tarda de 10 a 40 min según la
+conexión): contenedor `healthy`, mismas 123/123 predicciones del paso 7, `/docs` apagado (404), sin
+cabecera `Server`, cabeceras de seguridad presentes, `/monitoreo` exige token (401 sin él), proceso
+corriendo como usuario `app` (sin privilegios), sin datos de entrenamiento dentro, registro de
+monitoreo sin textos, `X-Forwarded-For` falso no salta el límite y cuerpo chunked de 7 MB → 413.
 
-### Nube
-
-| Plataforma | RAM gratuita | Notas |
-|---|---|---|
-| Hugging Face Spaces (Docker) | 16 GB | Desde 2026 crear un Space con Docker exige el plan PRO (9 USD/mes). |
-| Azure for Students | Créditos de estudiante | Opción gratuita con correo institucional; admite contenedores de ~1 GB. |
-| Render / Railway | 512 MB | No alcanza: el servicio usa ~1 GB. Se necesita un plan de ≥ 2 GB. |
-| Servidor institucional | — | `docker run` detrás de Nginx con HTTPS. |
+Si más adelante se pone un proxy con HTTPS delante (Nginx, servidor institucional), hay que volver
+a activar `--proxy-headers` con `--forwarded-allow-ips=<IP del proxy>` (nunca `'*'`), para que el
+límite use la IP real del usuario.
 
 Variables de entorno:
 
@@ -141,8 +140,8 @@ si baja, reentrenar con los pasos 6–8 y regenerar la referencia con `paso10_de
 |---|---|
 | `api.py` | API con seguridad y registro de monitoreo |
 | `monitoreo.py` | Registro, referencia y reporte de deriva (PSI) |
-| `paso10_rendimiento.py` | Medición de tiempos y memoria |
+| `paso10_rendimiento.py` | Medición de tiempos y memoria (en proceso o contra el contenedor con `--url`) |
 | `paso10_deriva.py` | Crea la referencia y valida el monitor con 5 escenarios |
-| `test_api.py` | 18 pruebas: funcionalidad, seguridad y monitoreo |
+| `test_api.py` | 22 pruebas: funcionalidad, seguridad y monitoreo |
 | `Dockerfile`, `.dockerignore` | Imagen de despliegue |
 | `requirements_app.txt`, `requirements_dev.txt` | Dependencias de producción y de pruebas |

@@ -2,7 +2,15 @@
 Paso 10a: Tiempos de inferencia y uso de memoria del servicio.
 
 Mide la API completa (validacion, modelo, serializacion JSON y registro de
-monitoreo) con TestClient, en este computador y en CPU:
+monitoreo), en CPU, de dos formas:
+  - por defecto: TestClient en este mismo proceso (desarrollo).
+  - --url: contra el servicio ya desplegado (el contenedor Docker), por HTTP.
+    Es la medicion que vale para el despliegue. El contenedor debe arrancarse
+    sin limite de peticiones para medir:
+        docker run -d --name polaridad -p 8000:8000 -e RATE_LIMIT=0 polaridad-docente
+        python paso10_rendimiento.py --url http://127.0.0.1:8000 --contenedor polaridad
+    El arranque se toma de /salud (segundos_carga) y la memoria de docker stats.
+Pruebas:
   1. Arranque en frio: cargar el modelo + calentamiento.
   2. Latencia de un comentario: 300 peticiones -> media, p50, p95, p99.
   3. Lotes de 1, 10, 50, 100, 500 y 1000 comentarios: ms por lote y comentarios/s.
@@ -13,14 +21,20 @@ Compara con objetivos de servicio definidos de antemano (OBJETIVOS).
 Salidas: resultados_rendimiento.csv, paso10_rendimiento_salida.txt
 """
 
+import argparse
 import os
 import platform
+import subprocess
 import sys
 import tempfile
 import time
 from pathlib import Path
 
 CARPETA = Path(__file__).resolve().parent
+parser = argparse.ArgumentParser(description="Paso 10a: tiempos y memoria del servicio")
+parser.add_argument("--url", help="URL del servicio desplegado (p. ej. http://127.0.0.1:8000)")
+parser.add_argument("--contenedor", help="nombre del contenedor Docker, para medir su memoria")
+ARGS = parser.parse_args()
 os.environ["RATE_LIMIT"] = "0"                                  # sin limite durante la medicion
 os.environ["RUTA_REGISTRO"] = str(Path(tempfile.mkdtemp()) / "registro.jsonl")  # no ensucia el real
 
@@ -54,25 +68,46 @@ class Duplicar:
 _salida = open(CARPETA / "paso10_rendimiento_salida.txt", "w", encoding="utf-8")
 sys.stdout = Duplicar(sys.__stdout__, _salida)
 proceso = psutil.Process()
-mb = lambda: proceso.memory_info().rss / 1024 ** 2  # noqa: E731
+
+
+def mb():
+    if ARGS.contenedor:  # memoria del contenedor completo, no de este proceso
+        uso = subprocess.run(["docker", "stats", "--no-stream", "--format", "{{.MemUsage}}", ARGS.contenedor],
+                             capture_output=True, text=True, check=True).stdout.split("/")[0].strip()
+        valor, unidad = float(uso[:-3]), uso[-3:]
+        return valor * {"KiB": 1 / 1024, "MiB": 1, "GiB": 1024}[unidad]
+    return proceso.memory_info().rss / 1024 ** 2
+
 
 print(f"CPU: {platform.processor()} | nucleos logicos: {psutil.cpu_count()} | "
       f"RAM: {psutil.virtual_memory().total / 1024 ** 3:.1f} GB | Python {platform.python_version()}")
+print(f"Modo: {'servicio desplegado ' + ARGS.url if ARGS.url else 'TestClient en proceso'}"
+      + (f" | contenedor {ARGS.contenedor}" if ARGS.contenedor else ""))
 print(f"Tamano de modelo_final.joblib: {(CARPETA / 'modelo_final.joblib').stat().st_size / 1024:.0f} KB "
       "(+ ~470 MB del modelo MiniLM en la cache de Hugging Face)")
 mem0 = mb()
 
 # 1. Arranque en frio ---------------------------------------------------------
-t0 = time.perf_counter()
-from fastapi.testclient import TestClient  # noqa: E402
+if ARGS.url:
+    import httpx
+    cliente = httpx.Client(base_url=ARGS.url, timeout=600)
+    salud = cliente.get("/salud").json()
+    assert salud["estado"] == "ok", salud
+    arranque = salud["segundos_carga"]  # cargar + calentar, medido por el propio servicio
+    mem_cargado = mb()
+    print(f"\n1. Arranque del servicio (cargar + calentar, segun /salud): {arranque:.1f} s | "
+          f"memoria {mem_cargado:.0f} MB")
+else:
+    t0 = time.perf_counter()
+    from fastapi.testclient import TestClient
 
-from api import app  # noqa: E402
+    from api import app
 
-cliente = TestClient(app)
-cliente.__enter__()
-arranque = time.perf_counter() - t0
-mem_cargado = mb()
-print(f"\n1. Arranque (importar + cargar + calentar): {arranque:.1f} s | memoria {mem0:.0f} -> {mem_cargado:.0f} MB")
+    cliente = TestClient(app)
+    cliente.__enter__()
+    arranque = time.perf_counter() - t0
+    mem_cargado = mb()
+    print(f"\n1. Arranque (importar + cargar + calentar): {arranque:.1f} s | memoria {mem0:.0f} -> {mem_cargado:.0f} MB")
 
 test = pd.read_csv(CARPETA / "test.csv", sep=";")
 textos = test["feedback"].tolist()
@@ -133,7 +168,7 @@ filas.append({"prueba": "csv", "n": 1000, "media_ms": t_csv * 1000})
 
 # 5. Memoria -----------------------------------------------------------------
 mem_final = mb()
-print(f"\n5. Memoria RSS: tras cargar {mem_cargado:.0f} MB | tras todas las pruebas {mem_final:.0f} MB")
+print(f"\n5. Memoria {'del contenedor' if ARGS.contenedor else 'RSS'}: tras cargar {mem_cargado:.0f} MB | tras todas las pruebas {mem_final:.0f} MB")
 
 # Objetivos ------------------------------------------------------------------
 medido = {
@@ -141,7 +176,7 @@ medido = {
     "lote de 100 (s)": lote100 / 1000,
     "CSV de 1000 filas (s)": t_csv,
     "arranque (s)": arranque,
-    "memoria RSS (MB)": mem_final,
+    "memoria RSS (MB)": mem_final,  # con --contenedor: memoria del contenedor
 }
 print("\n" + "=" * 70 + "\nOBJETIVOS DE SERVICIO\n" + "=" * 70)
 for k, lim in OBJETIVOS.items():
@@ -150,6 +185,6 @@ for k, lim in OBJETIVOS.items():
 
 pd.DataFrame(filas).round(2).to_csv(CARPETA / "resultados_rendimiento.csv", index=False, sep=";")
 print("\nGuardados: resultados_rendimiento.csv, paso10_rendimiento_salida.txt")
-cliente.__exit__(None, None, None)
+cliente.close() if ARGS.url else cliente.__exit__(None, None, None)
 sys.stdout = sys.__stdout__
 _salida.close()

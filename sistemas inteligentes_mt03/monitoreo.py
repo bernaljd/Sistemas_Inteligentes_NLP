@@ -13,8 +13,10 @@ Que se registra por cada comentario (monitoreo/predicciones.jsonl):
   y un hash del texto. NO se guarda el texto: los comentarios pueden contener
   datos personales de estudiantes y docentes.
 
-Referencia (monitoreo/referencia.json): las mismas variables calculadas sobre
-test.csv (datos que el modelo no vio al entrenar = comportamiento esperado).
+Referencia (monitoreo/referencia.json): las mismas variables calculadas con
+predicciones FUERA DE MUESTRA sobre train.csv (validacion cruzada 5-fold, la
+genera paso10_deriva.py): comentarios que el modelo no vio = comportamiento
+esperado. test.csv se usa despues para comprobar que el monitor marca "estable".
 
 Indicadores de deriva:
   - PSI (Population Stability Index) de n_palabras, oov y confianza.

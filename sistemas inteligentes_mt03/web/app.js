@@ -57,6 +57,9 @@ async function cargarEstado() {
       <li><b>${m.macro_f1_test.toFixed(2)}</b>Macro-F1 en test</li>
       <li><b>${Math.round(m.accuracy_test * 100)}%</b>Aciertos en test</li>
       <li><b>3</b>Clases de polaridad</li>`;
+    // La nota inferior sale de los metadatos del modelo cargado, no de un texto fijo
+    $("#nota-aciertos").textContent = `${Math.round(m.accuracy_test * 100)}%`;
+    $("#nota-f1").textContent = m.macro_f1_test.toFixed(2);
   } catch (e) {
     pill.className = "estado-api error";
     pill.lastChild.textContent = "Servicio no disponible";
