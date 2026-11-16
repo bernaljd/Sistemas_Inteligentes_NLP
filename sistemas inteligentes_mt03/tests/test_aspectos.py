@@ -1,7 +1,7 @@
 """
 Pruebas del punto 5 (imagen 3): salida estructurada con una prediccion por aspecto.
 
-Ejecutar:  python -m pytest test_aspectos.py -v   (o: python test_aspectos.py)
+Ejecutar (en la carpeta del proyecto):  python -m pytest tests/test_aspectos.py -v   (o: python tests/test_aspectos.py)
 """
 
 import json
@@ -12,6 +12,7 @@ from pathlib import Path
 
 os.environ.setdefault("RUTA_REGISTRO", str(Path(tempfile.mkdtemp()) / "registro_aspectos.jsonl"))
 
+from proyecto import CARPETA, DATOS  # noqa: E402  # primero: agrega el proyecto al sys.path
 import pandas as pd  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
@@ -20,7 +21,6 @@ from aspectos import ASPECTOS, CLAVES, GRUPO_DE, etiquetas, fragmentos  # noqa: 
 from carga_segura import ModeloNoConfiable, cargar_joblib_confiable  # noqa: E402
 from versiones_modelo import ruta_activa  # noqa: E402
 
-CARPETA = Path(__file__).resolve().parent
 CAMPOS = {"aspecto", "nombre", "mencionado", "probabilidad", "sentimiento", "probabilidades_sentimiento"}
 _modelo = None
 _cliente = None
@@ -60,7 +60,7 @@ def _formato_valido(salida):
 # ---------------------------------------------------------------------------
 
 def test_los_22_aspectos_de_los_datos_caen_en_9_grupos():
-    df = pd.read_csv(CARPETA / "feedback_preprocesado.csv", sep=";")
+    df = pd.read_csv(DATOS / "feedback_preprocesado.csv", sep=";")
     nombres = {a["aspecto"] for x in df["aspectos"].dropna() for a in json.loads(x)}
     assert len(nombres) == 22 and nombres <= set(GRUPO_DE), nombres - set(GRUPO_DE)
     assert len(ASPECTOS) == 9 and set(GRUPO_DE.values()) == set(CLAVES)
@@ -100,7 +100,7 @@ def test_textos_vacios_no_predicen_aspectos():
 
 
 def test_lote_igual_a_uno_a_uno_y_determinista():
-    textos = pd.read_csv(CARPETA / "test.csv", sep=";")["feedback"].tolist()[:8]
+    textos = pd.read_csv(DATOS / "test.csv", sep=";")["feedback"].tolist()[:8]
     m = modelo()["modelo"]
     lote = m.predecir(textos)
     assert lote == m.predecir(textos)
@@ -113,7 +113,7 @@ def test_lote_igual_a_uno_a_uno_y_determinista():
 def test_metricas_registradas_se_reproducen():
     # El modelo guardado reproduce en test la F1 de presencia registrada por el paso 11
     from sklearn.metrics import f1_score
-    test = pd.read_csv(CARPETA / "test.csv", sep=";")
+    test = pd.read_csv(DATOS / "test.csv", sep=";")
     salida = modelo()["modelo"].predecir(test["feedback"].tolist())
     reales = [etiquetas(a if isinstance(a, str) else "[]") for a in test["aspectos"]]
     f1 = [f1_score([c in r for r in reales], [s[j]["mencionado"] for s in salida], zero_division=0)

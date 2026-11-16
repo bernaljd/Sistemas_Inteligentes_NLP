@@ -1,7 +1,7 @@
 """
 Pruebas del punto 3 (imagen 3): seguridad en la deserializacion de joblib.
 
-Ejecutar:  python -m pytest test_carga_segura.py -v   (o: python test_carga_segura.py)
+Ejecutar (en la carpeta del proyecto):  python -m pytest tests/test_carga_segura.py -v   (o: python tests/test_carga_segura.py)
 
 La prueba central usa un .joblib MALICIOSO de verdad: al deserializarlo crea
 una carpeta "marca" (inofensivo, dentro de una carpeta temporal). Si la marca
@@ -19,12 +19,12 @@ from pathlib import Path
 
 import joblib
 
-import carga_segura
+from proyecto import CARPETA, DATOS  # noqa: E402  # primero: agrega el proyecto al sys.path
+import carga_segura  # noqa: E402
 from carga_segura import (ModeloNoConfiable, cargar_joblib_confiable, ruta_metadatos,
                           sha256_archivo)
 from versiones_modelo import ruta_activa
 
-CARPETA = Path(__file__).resolve().parent
 MODELO = ruta_activa("polaridad")  # modelos/polaridad/<version activa>/modelo_final.joblib
 
 
@@ -100,7 +100,7 @@ def test_fuera_de_la_carpeta_permitida():
 
 
 def test_solo_archivos_joblib():
-    _rechaza(lambda: cargar_joblib_confiable(CARPETA / "train.csv"), "Solo se cargan archivos .joblib")
+    _rechaza(lambda: cargar_joblib_confiable(DATOS / "train.csv"), "Solo se cargan archivos .joblib")
 
 
 def test_variable_de_entorno_tiene_prioridad():
@@ -121,7 +121,7 @@ def test_variable_de_entorno_tiene_prioridad():
 def test_ningun_script_usa_joblib_load_directo():
     # Todo .joblib se carga con cargar_joblib_confiable (salvo demostraciones explicitas)
     permitidos = {"carga_segura.py", "test_carga_segura.py"}
-    for py in CARPETA.glob("*.py"):
+    for py in [*CARPETA.glob("*.py"), *(CARPETA / "tests").glob("*.py")]:
         if py.name in permitidos:
             continue
         codigo = py.read_text(encoding="utf-8")

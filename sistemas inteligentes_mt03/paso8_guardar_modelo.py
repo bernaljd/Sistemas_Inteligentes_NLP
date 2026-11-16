@@ -46,6 +46,8 @@ from pipeline_feedback import (CLASES, MODELO_EMBEDDINGS, REVISION_EMBEDDINGS, S
                                UMBRAL_CONFIANZA, construir_pipeline, limpiar_texto)
 
 CARPETA = Path(__file__).resolve().parent
+DATOS = CARPETA / "datos"            # train.csv, test.csv, embeddings
+RESULTADOS = CARPETA / "resultados"  # tablas, salidas de consola y artefactos de cada paso
 ETIQUETA = "polaridad_basica"
 VERSION_MODELO = "1.1.0"  # 1.1.0: paso "entrada" + revision de embeddings fijada
 
@@ -72,7 +74,7 @@ class Duplicar:
             f.flush()
 
 
-_salida = open(CARPETA / "paso8_salida.txt", "w", encoding="utf-8")
+_salida = open(RESULTADOS / "paso8_salida.txt", "w", encoding="utf-8")
 sys.stdout = Duplicar(sys.__stdout__, _salida)
 
 
@@ -89,8 +91,8 @@ def sha256(ruta):
 # ---------------------------------------------------------------------------
 
 titulo("1. SELECCION DEL MEJOR MODELO")
-res6 = pd.read_csv(CARPETA / "resultados_paso6.csv", sep=";")
-res7 = pd.read_csv(CARPETA / "resultados_paso7.csv", sep=";")
+res6 = pd.read_csv(RESULTADOS / "resultados_paso6.csv", sep=";")
+res7 = pd.read_csv(RESULTADOS / "resultados_paso7.csv", sep=";")
 
 tabla = res7[["modelo", "rol", "macro_f1_cv", "macro_f1_cv_desv", "macro_f1_test",
               "macro_f1_test_ic95_inf", "macro_f1_test_ic95_sup", "accuracy_test",
@@ -127,8 +129,8 @@ justificacion.append("Regresion logistica: entrega probabilidades (predict_proba
 # ---------------------------------------------------------------------------
 
 titulo("2. DATOS")
-train = pd.read_csv(CARPETA / "train.csv", sep=";")
-test = pd.read_csv(CARPETA / "test.csv", sep=";")
+train = pd.read_csv(DATOS / "train.csv", sep=";")
+test = pd.read_csv(DATOS / "test.csv", sep=";")
 X_train, y_train = train["feedback"].tolist(), train[ETIQUETA].to_numpy()
 X_test, y_test = test["feedback"].tolist(), test[ETIQUETA].to_numpy()
 
@@ -141,7 +143,7 @@ for nombre, df in [("train", train), ("test", test)]:
 datos = {}
 for archivo, df in [("train.csv", train), ("test.csv", test),
                     ("feedback_preprocesado.csv", None)]:
-    info = {"sha256": sha256(CARPETA / archivo)}
+    info = {"sha256": sha256(DATOS / archivo)}
     if df is not None:
         info["filas"] = len(df)
         info["clases"] = {c: int((df[ETIQUETA] == c).sum()) for c in CLASES}
@@ -169,22 +171,22 @@ assert list(pipeline.classes_) == CLASES
 titulo("4. VERIFICACION CONTRA modelo_paso6.joblib")
 emb_pipe = pipeline.named_steps["features"].transformer_list[1][1].transform(X_train)
 print(f"  Modelo de embeddings: {MODELO_EMBEDDINGS} @ {REVISION_EMBEDDINGS[:12]}")
-cos = np.sum(emb_pipe * np.load(CARPETA / "embeddings_train.npy"), axis=1)
+cos = np.sum(emb_pipe * np.load(DATOS / "embeddings_train.npy"), axis=1)
 print(f"  Embeddings train vs embeddings_train.npy: coseno min = {cos.min():.6f}")
 assert cos.min() > 0.999
 
 # Se carga solo si su sha256 coincide con el registrado por el paso 7
 anterior = cargar_joblib_confiable(
-    CARPETA / "modelo_paso6.joblib",
-    sha256=huella_en_registro(CARPETA / "registro_modelo_paso7.json", "modelo_paso6.joblib"))["modelo"]
+    RESULTADOS / "modelo_paso6.joblib",
+    sha256=huella_en_registro(RESULTADOS / "registro_modelo_paso7.json", "modelo_paso6.joblib"))["modelo"]
 cols = [f"emb_{i}" for i in range(384)]
 X_test_combo = pd.concat([test[["texto_limpio"]].reset_index(drop=True),
-                          pd.DataFrame(np.load(CARPETA / "embeddings_test.npy"), columns=cols)], axis=1)
+                          pd.DataFrame(np.load(DATOS / "embeddings_test.npy"), columns=cols)], axis=1)
 p_ant = anterior.predict_proba(X_test_combo)
 p_new = pipeline.predict_proba(X_test)
 dif = np.abs(p_ant - p_new).max()
 pred_new = pipeline.predict(X_test)
-pred_paso7 = pd.read_csv(CARPETA / "predicciones_test.csv", sep=";")[f"pred_{elegido}"].to_numpy()
+pred_paso7 = pd.read_csv(RESULTADOS / "predicciones_test.csv", sep=";")[f"pred_{elegido}"].to_numpy()
 print(f"  Diferencia max. de probabilidades en test: {dif:.2e}")
 print(f"  Predicciones iguales a las del paso 7: {(pred_new == pred_paso7).sum()}/{len(test)}")
 assert dif < 1e-3 and (pred_new == pred_paso7).all(), "El pipeline no reproduce el modelo del paso 6"

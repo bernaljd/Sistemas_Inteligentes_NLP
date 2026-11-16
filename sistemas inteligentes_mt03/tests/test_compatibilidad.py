@@ -2,7 +2,7 @@
 Pruebas del punto 4 (imagen 3): compatibilidad de versiones entre
 entrenamiento y produccion.
 
-Ejecutar:  python -m pytest test_compatibilidad.py -v   (o: python test_compatibilidad.py)
+Ejecutar (en la carpeta del proyecto):  python -m pytest tests/test_compatibilidad.py -v   (o: python tests/test_compatibilidad.py)
 
 Comprueba:
   - la politica de compatibilidad.py (criticas vs. exactas, parche de Python,
@@ -21,11 +21,11 @@ from pathlib import Path
 
 import joblib
 
-import compatibilidad as cp
+from proyecto import CARPETA  # noqa: E402  # primero: agrega el proyecto al sys.path
+import compatibilidad as cp  # noqa: E402
 from carga_segura import ruta_metadatos, sha256_archivo
 from versiones_modelo import ruta_activa
 
-CARPETA = Path(__file__).resolve().parent
 META = json.loads(ruta_metadatos(ruta_activa("polaridad")).read_text(encoding="utf-8"))
 REGISTRADAS = META["versiones"]
 

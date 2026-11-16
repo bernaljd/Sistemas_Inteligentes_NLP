@@ -16,6 +16,7 @@ Salidas:
   - modelo_paso6.joblib           : mejor modelo reentrenado con todo train, listo para el paso 7.
 """
 import time
+from pathlib import Path
 
 import joblib
 import numpy as np
@@ -27,12 +28,16 @@ from sklearn.model_selection import GridSearchCV, StratifiedKFold
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
 
+CARPETA = Path(__file__).resolve().parent
+DATOS = CARPETA / "datos"            # train.csv, test.csv, embeddings
+RESULTADOS = CARPETA / "resultados"  # tablas, salidas de consola y artefactos de cada paso
+
 ETIQUETA, SEMILLA = "polaridad_basica", 42
 MODELO_EMBEDDINGS = "paraphrase-multilingual-MiniLM-L12-v2"  # el mismo del paso 4
 
-train = pd.read_csv("train.csv", sep=";")
+train = pd.read_csv(DATOS / "train.csv", sep=";")
 y = train[ETIQUETA]
-X_emb = np.load("embeddings_train.npy")
+X_emb = np.load(DATOS / "embeddings_train.npy")
 assert len(train) == len(X_emb), "embeddings_train.npy no coincide con train.csv"
 
 cols_emb = [f"emb_{i}" for i in range(X_emb.shape[1])]
@@ -102,9 +107,9 @@ for nombre, (busqueda, X, entrada) in busquedas.items():
     print(f"listo: {nombre}")
 
 res = pd.DataFrame(filas).sort_values("macro_f1_media", ascending=False).round(3)
-res.to_csv("resultados_paso6.csv", index=False, sep=";")
+res.to_csv(RESULTADOS / "resultados_paso6.csv", index=False, sep=";")
 detalle = pd.concat(detalle).sort_values(["candidato", "ranking"]).round(4)
-detalle.to_csv("resultados_paso6_detalle.csv", index=False, sep=";")
+detalle.to_csv(RESULTADOS / "resultados_paso6_detalle.csv", index=False, sep=";")
 
 pd.set_option("display.max_colwidth", 120, "display.width", 250)
 print("\n" + "=" * 100)
@@ -132,6 +137,6 @@ joblib.dump({
     "columnas_embeddings": cols_emb,          # nombres de columnas si usa TF-IDF + embeddings
     "modelo_embeddings": MODELO_EMBEDDINGS,   # con que modelo calcular embeddings de test
     "macro_f1_cv": res.iloc[0]["macro_f1_media"],
-}, "modelo_paso6.joblib")
+}, RESULTADOS / "modelo_paso6.joblib")
 print(f"\nMejor candidato: {mejor} -> guardado en modelo_paso6.joblib")
 print("Guardados: resultados_paso6.csv, resultados_paso6_detalle.csv")

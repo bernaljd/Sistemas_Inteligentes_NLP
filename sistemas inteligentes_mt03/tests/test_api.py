@@ -1,8 +1,8 @@
 """
 Pruebas del servicio de prediccion (pasos 4-6: funcionalidad, seguridad, monitoreo).
 
-Ejecutar:  python -m pytest test_api.py -v
-           (o sin pytest: python test_api.py)
+Ejecutar (en la carpeta del proyecto):  python -m pytest tests/test_api.py -v
+           (o sin pytest: python tests/test_api.py)
 No hace falta tener uvicorn corriendo: TestClient levanta la app en memoria.
 """
 
@@ -13,6 +13,7 @@ from pathlib import Path
 # El registro de monitoreo de las pruebas va a un archivo temporal, no al real
 os.environ["RUTA_REGISTRO"] = str(Path(tempfile.mkdtemp()) / "registro_pruebas.jsonl")
 
+from proyecto import CARPETA, DATOS, RESULTADOS  # noqa: E402  # primero: agrega el proyecto al sys.path
 import pandas as pd  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
@@ -84,8 +85,8 @@ def test_entradas_invalidas_dan_422():
 
 
 def test_lote_coincide_con_predicciones_del_paso7():
-    test = pd.read_csv("test.csv", sep=";")
-    esperado = pd.read_csv("predicciones_test.csv", sep=";")["pred_LogReg + TF-IDF+Emb"]
+    test = pd.read_csv(DATOS / "test.csv", sep=";")
+    esperado = pd.read_csv(RESULTADOS / "predicciones_test.csv", sep=";")["pred_LogReg + TF-IDF+Emb"]
     d = cliente().post("/predecir/lote", json={"textos": test["feedback"].tolist()}).json()
     assert d["n"] == len(test)
     assert [r["prediccion"] for r in d["resultados"]] == esperado.tolist()
@@ -204,12 +205,12 @@ def test_html_malicioso_se_devuelve_como_dato():
     assert r.status_code == 200
     assert r.headers["content-type"].startswith("application/json")
     assert r.json()["texto"] == ataque  # se devuelve tal cual; la pagina lo escapa con esc()
-    assert "esc(r.texto)" in Path("web/app.js").read_text(encoding="utf-8")
+    assert "esc(r.texto)" in (CARPETA / "web" / "app.js").read_text(encoding="utf-8")
 
 
 def test_csv_descargado_neutraliza_formulas():
     # La descarga de la pagina escapa comentarios que Excel ejecutaria como formula
-    js = Path("web/app.js").read_text(encoding="utf-8")
+    js = (CARPETA / "web" / "app.js").read_text(encoding="utf-8")
     assert "function sinFormula" in js and "celda = (v) => `\"${sinFormula(v)" in js
     # y la API devuelve el texto sin modificar (el escape es solo al exportar)
     ataque = '=HYPERLINK("http://ejemplo.invalid","clic")'
@@ -236,14 +237,14 @@ def test_peticion_grande_en_chunks_413():
 
 def test_dockerfile_no_confia_en_x_forwarded_for():
     # Con --forwarded-allow-ips='*' una IP falsa en X-Forwarded-For saltaba el limite
-    cmd = [l for l in Path("Dockerfile").read_text(encoding="utf-8").splitlines() if l.startswith("CMD")][0]
+    cmd = [l for l in (CARPETA / "Dockerfile").read_text(encoding="utf-8").splitlines() if l.startswith("CMD")][0]
     assert "--proxy-headers" not in cmd and "forwarded-allow-ips" not in cmd
 
 
 def test_dockerfile_descarga_la_misma_revision_de_embeddings():
     # El contenedor no tiene internet: debe traer exactamente la revision del Pipeline
     from pipeline_feedback import MODELO_EMBEDDINGS, REVISION_EMBEDDINGS
-    docker = Path("Dockerfile").read_text(encoding="utf-8")
+    docker = (CARPETA / "Dockerfile").read_text(encoding="utf-8")
     assert f"ARG REVISION_EMBEDDINGS={REVISION_EMBEDDINGS}" in docker
     assert f"SentenceTransformer('{MODELO_EMBEDDINGS}', revision='${{REVISION_EMBEDDINGS}}')" in docker
 
@@ -284,7 +285,7 @@ def test_monitoreo_registra_sin_texto_y_reporta():
     cliente().post("/predecir", json={"texto": secreto})
     registro = Path(os.environ["RUTA_REGISTRO"]).read_text(encoding="utf-8")
     assert "Perez" not in registro and '"hash"' in registro  # privacidad: no se guarda el texto
-    test = pd.read_csv("test.csv", sep=";")
+    test = pd.read_csv(DATOS / "test.csv", sep=";")
     cliente().post("/predecir/lote", json={"textos": test["feedback"].tolist()})
     rep = cliente().get("/monitoreo?ultimos=123").json()
     assert rep["estado"] == "estable", rep["alertas"]

@@ -18,6 +18,7 @@ Salidas:
 """
 
 import time
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -33,12 +34,16 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.svm import LinearSVC
 
+CARPETA = Path(__file__).resolve().parent
+DATOS = CARPETA / "datos"            # train.csv, test.csv, embeddings
+RESULTADOS = CARPETA / "resultados"  # tablas, salidas de consola y artefactos de cada paso
+
 ETIQUETA = "polaridad_basica"
 SEMILLA = 42
 
-train = pd.read_csv("train.csv", sep=";")
+train = pd.read_csv(DATOS / "train.csv", sep=";")
 y = train[ETIQUETA]
-X_emb = np.load("embeddings_train.npy")
+X_emb = np.load(DATOS / "embeddings_train.npy")
 assert len(train) == len(X_emb), "embeddings_train.npy no coincide con train.csv: vuelve a correr vectorizacion.py"
 
 print(f"Train: {len(train)} comentarios")
@@ -123,7 +128,7 @@ for rep, nombre, modelo, X in experimentos:
     print(f"  listo: {rep:<20} {nombre}")
 
 res = pd.DataFrame(filas).sort_values("macro_f1_media", ascending=False).round(3)
-res.to_csv("resultados_paso5.csv", index=False, sep=";")
+res.to_csv(RESULTADOS / "resultados_paso5.csv", index=False, sep=";")
 
 print("\n" + "=" * 100)
 print("RESULTADOS (validacion cruzada 5 particiones sobre train, ordenados por macro-F1)")

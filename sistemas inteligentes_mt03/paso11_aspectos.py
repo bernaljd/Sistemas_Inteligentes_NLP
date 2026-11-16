@@ -43,6 +43,8 @@ from pipeline_feedback import CLASES, MODELO_EMBEDDINGS, REVISION_EMBEDDINGS
 from versiones_modelo import leer_registro, registrar, ruta_version
 
 CARPETA = Path(__file__).resolve().parent
+DATOS = CARPETA / "datos"            # train.csv, test.csv, embeddings
+RESULTADOS = CARPETA / "resultados"  # tablas, salidas de consola y artefactos de cada paso
 SEMILLA = 42
 VERSION_MODELO = "1.0.0"
 
@@ -70,7 +72,7 @@ class Duplicar:
             x.flush()
 
 
-_salida = open(CARPETA / "paso11_salida.txt", "w", encoding="utf-8")
+_salida = open(RESULTADOS / "paso11_salida.txt", "w", encoding="utf-8")
 sys.stdout = Duplicar(sys.__stdout__, _salida)
 
 
@@ -87,8 +89,8 @@ def sha256(ruta):
 # ---------------------------------------------------------------------------
 
 titulo("1. DATOS: 22 nombres de aspecto -> 9 aspectos")
-train = pd.read_csv(CARPETA / "train.csv", sep=";")
-test = pd.read_csv(CARPETA / "test.csv", sep=";")
+train = pd.read_csv(DATOS / "train.csv", sep=";")
+test = pd.read_csv(DATOS / "test.csv", sep=";")
 for clave, (nombre, originales) in ASPECTOS.items():
     print(f"  {clave:<20} {nombre:<28} <- {', '.join(originales)}")
 
@@ -224,7 +226,7 @@ filas.append({"evaluacion": "test", "componente": "salida estructurada: tuplas (
               "aspecto": "todos", "precision": tuplas_p, "recall": tuplas_r, "f1": tuplas_f1})
 filas.append({"evaluacion": "test", "componente": "salida estructurada: exactitud por celda", "aspecto": "todos",
               "f1": exactitud_celdas, "f1_linea_base_azar": base_celdas})
-pd.DataFrame(filas).round(4).to_csv(CARPETA / "resultados_aspectos.csv", index=False, sep=";")
+pd.DataFrame(filas).round(4).to_csv(RESULTADOS / "resultados_aspectos.csv", index=False, sep=";")
 
 ejemplo = "El profesor sabe mucho y explica muy bien, pero los parciales son injustos y nunca responde los correos."
 print(f"\nEjemplo: {ejemplo}")
@@ -264,8 +266,8 @@ metadatos = {
     "parametros": {"umbral_mencion": modelo.umbral, "C_presencia": modelo.C_presencia,
                    "C_sentimiento": modelo.C_sentimiento, "entrada_sentimiento": DISENO,
                    "embeddings": {"modelo": MODELO_EMBEDDINGS, "revision": REVISION_EMBEDDINGS}},
-    "datos": {"train.csv": {"sha256": sha256(CARPETA / "train.csv"), "filas": len(train)},
-              "test.csv": {"sha256": sha256(CARPETA / "test.csv"), "filas": len(test)}},
+    "datos": {"train.csv": {"sha256": sha256(DATOS / "train.csv"), "filas": len(train)},
+              "test.csv": {"sha256": sha256(DATOS / "test.csv"), "filas": len(test)}},
     "entrenado_con": "train.csv; test.csv solo para la evaluacion final",
     "versiones": versiones,
     "dependencia_codigo": "aspectos.py y pipeline_feedback.py deben estar importables al cargar el .joblib",

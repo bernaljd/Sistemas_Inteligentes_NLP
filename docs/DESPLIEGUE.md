@@ -4,13 +4,15 @@ Servicio: API FastAPI + página web (`/`) que clasifica comentarios de estudiant
 en negativo / neutral / positivo con la versión activa de `modelos/polaridad/`
 (`modelo_final.joblib`: LogReg + TF-IDF + MiniLM) y por aspecto con `modelos/aspectos/`.
 
+Todos los comandos de este documento se ejecutan dentro de `sistemas inteligentes_mt03/`.
+
 ## 1. Verificación
 
 | Aspecto | Cómo se verifica | Resultado |
 |---|---|---|
-| Funcionalidad | `python -m pytest test_api.py` (11 pruebas) | 11/11 OK |
-| Seguridad | `python -m pytest test_api.py` (9 pruebas) + `pip-audit` | 9/9 OK · 0 vulnerabilidades conocidas* |
-| Monitoreo | `python -m pytest test_api.py` (2 pruebas) + `python paso10_deriva.py` | 2/2 OK · deriva detectada en 4/4 escenarios |
+| Funcionalidad | `python -m pytest tests/test_api.py` (11 pruebas) | 11/11 OK |
+| Seguridad | `python -m pytest tests/test_api.py` (9 pruebas) + `pip-audit` | 9/9 OK · 0 vulnerabilidades conocidas* |
+| Monitoreo | `python -m pytest tests/test_api.py` (2 pruebas) + `python paso10_deriva.py` | 2/2 OK · deriva detectada en 4/4 escenarios |
 | Tiempos | `python paso10_rendimiento.py --url ... --contenedor ...` | ver tabla abajo |
 
 \* `pip-audit` encontró 10 vulnerabilidades en Starlette 0.52.1 (base de FastAPI). Se actualizó a
@@ -334,20 +336,20 @@ si baja, reentrenar con los pasos 6–8 y regenerar la referencia con `paso10_de
 |---|---|
 | `api.py` | API con seguridad y registro de monitoreo |
 | `carga_segura.py` | Carga de `.joblib` solo si su sha256 coincide con el registrado |
-| `test_carga_segura.py` | 8 pruebas de deserialización segura (incluye un `.joblib` malicioso) |
+| `tests/test_carga_segura.py` | 8 pruebas de deserialización segura (incluye un `.joblib` malicioso) |
 | `compatibilidad.py` | Compara las versiones del modelo con las instaladas antes de cargarlo |
-| `test_compatibilidad.py` | 13 pruebas de versiones (política y que todas las fuentes coincidan) |
+| `tests/test_compatibilidad.py` | 13 pruebas de versiones (política y que todas las fuentes coincidan) |
 | `aspectos.py` | Los 9 aspectos y el modelo de presencia + sentimiento por aspecto |
 | `paso11_aspectos.py` | Elige el diseño con validación cruzada, evalúa en test y guarda el modelo de aspectos |
 | `modelos/` | Versiones de cada modelo (`.joblib`, metadatos y firma) y `registro.json` |
 | `versiones_modelo.py` | Registrar, promover, revertir, listar y verificar versiones |
-| `test_versiones_modelo.py` | 11 pruebas del ciclo de versiones y de los cambios que se rechazan |
-| `resultados_aspectos.csv`, `paso11_salida.txt` | Resultados por aspecto (CV y test) |
-| `test_aspectos.py` | 11 pruebas de la salida estructurada (formato, vacíos, API, huella, métricas) |
+| `tests/test_versiones_modelo.py` | 11 pruebas del ciclo de versiones y de los cambios que se rechazan |
+| `resultados/resultados_aspectos.csv`, `resultados/paso11_salida.txt` | Resultados por aspecto (CV y test) |
+| `tests/test_aspectos.py` | 11 pruebas de la salida estructurada (formato, vacíos, API, huella, métricas) |
 | `monitoreo.py` | Registro, referencia y reporte de deriva (PSI) |
 | `paso10_rendimiento.py` | Medición de tiempos y memoria (en proceso o contra el contenedor con `--url`) |
 | `paso10_deriva.py` | Crea la referencia y valida el monitor con 5 escenarios |
-| `test_api.py` | 24 pruebas: funcionalidad, eficiencia, seguridad y monitoreo |
+| `tests/test_api.py` | 24 pruebas: funcionalidad, eficiencia, seguridad y monitoreo |
 | `Dockerfile`, `.dockerignore` | Imagen de despliegue |
 | `requirements_modelo.txt` | Versiones exactas del modelo (única fuente; la genera el paso 8) |
 | `requirements.txt`, `requirements_app.txt`, `requirements_dev.txt` | Entrenamiento, producción y pruebas (incluyen `requirements_modelo.txt`) |

@@ -77,8 +77,10 @@ NOMBRE_PRINCIPAL = "LogReg + TF-IDF+Emb"
 
 parser = argparse.ArgumentParser(description="Paso 7: evaluacion final sobre test")
 parser.add_argument("--carpeta", default=str(Path(__file__).resolve().parent),
-                    help="Carpeta con train.csv, test.csv, embeddings_train.npy, modelo_paso6.joblib, ...")
+                    help="Carpeta del proyecto (con datos/ y resultados/)")
 CARPETA = Path(parser.parse_args().carpeta)
+DATOS = CARPETA / "datos"
+RESULTADOS = CARPETA / "resultados"
 
 
 # ---------------------------------------------------------------------------
@@ -98,7 +100,7 @@ class Duplicar:
             f.flush()
 
 
-_salida = open(CARPETA / "paso7_salida.txt", "w", encoding="utf-8")
+_salida = open(RESULTADOS / "paso7_salida.txt", "w", encoding="utf-8")
 sys.stdout = Duplicar(sys.__stdout__, _salida)
 
 
@@ -136,8 +138,9 @@ except ImportError:
 for k, v in versiones.items():
     print(f"  {k:<22} {v}")
 
-huellas = {f: huella(CARPETA / f) for f in
-           ["train.csv", "test.csv", "embeddings_train.npy", "modelo_paso6.joblib"]}
+huellas = {f.name: huella(f) for f in
+           [DATOS / "train.csv", DATOS / "test.csv", DATOS / "embeddings_train.npy",
+            RESULTADOS / "modelo_paso6.joblib"]}
 for f, h in huellas.items():
     print(f"  sha256 {f:<22} {h[:16]}...")
 
@@ -147,11 +150,11 @@ for f, h in huellas.items():
 # ---------------------------------------------------------------------------
 
 titulo("1. DATOS")
-train = pd.read_csv(CARPETA / "train.csv", sep=";")
-test = pd.read_csv(CARPETA / "test.csv", sep=";")
-X_emb_train = np.load(CARPETA / "embeddings_train.npy")
-res5 = pd.read_csv(CARPETA / "resultados_paso5.csv", sep=";")
-res6 = pd.read_csv(CARPETA / "resultados_paso6.csv", sep=";")
+train = pd.read_csv(DATOS / "train.csv", sep=";")
+test = pd.read_csv(DATOS / "test.csv", sep=";")
+X_emb_train = np.load(DATOS / "embeddings_train.npy")
+res5 = pd.read_csv(RESULTADOS / "resultados_paso5.csv", sep=";")
+res6 = pd.read_csv(RESULTADOS / "resultados_paso6.csv", sep=";")
 
 assert len(train) == len(X_emb_train), "embeddings_train.npy no coincide con train.csv"
 assert not set(train["id"]) & set(test["id"]), "Hay ids repetidos entre train y test"
@@ -198,7 +201,7 @@ if cos.min() < 0.999:
 
 X_emb_test = embeddings(test["feedback"])
 assert X_emb_test.shape == (len(test), X_emb_train.shape[1]), f"Forma inesperada: {X_emb_test.shape}"
-np.save(CARPETA / "embeddings_test.npy", X_emb_test)
+np.save(DATOS / "embeddings_test.npy", X_emb_test)
 print(f"Embeddings de test: {X_emb_test.shape} -> guardados en embeddings_test.npy")
 
 
@@ -250,8 +253,8 @@ try:
         # Solo si su sha256 coincide con el de registro_modelo_paso7.json (de una
         # ejecucion anterior); si no hay huella, no se deserializa y se reentrena.
         paquete = cargar_joblib_confiable(
-            CARPETA / "modelo_paso6.joblib", carpeta_permitida=CARPETA,
-            sha256=huella_en_registro(CARPETA / "registro_modelo_paso7.json", "modelo_paso6.joblib"))
+            RESULTADOS / "modelo_paso6.joblib", carpeta_permitida=CARPETA,
+            sha256=huella_en_registro(RESULTADOS / "registro_modelo_paso7.json", "modelo_paso6.joblib"))
     for a in avisos:
         print(f"  AVISO al cargar: {a.category.__name__}: {a.message}")
     principal = paquete["modelo"]
@@ -358,7 +361,7 @@ for nombre, pred in predicciones.items():
     filas.append(fila)
 
 resultados = pd.DataFrame(filas)
-resultados.round(4).to_csv(CARPETA / "resultados_paso7.csv", index=False, sep=";")
+resultados.round(4).to_csv(RESULTADOS / "resultados_paso7.csv", index=False, sep=";")
 
 pd.set_option("display.width", 250, "display.max_columns", 50)
 print(resultados[["modelo", "rol", "macro_f1_cv", "macro_f1_test", "macro_f1_test_ic95_inf",
@@ -429,7 +432,7 @@ for ax, datos, subtitulo, formato in [
         borde.set_visible(False)
     ax.tick_params(length=0)
 fig.suptitle(f"Regresión logística (TF-IDF + embeddings) en test (n = {len(test)})", fontsize=13)
-fig.savefig(CARPETA / "matriz_confusion_paso7.png", dpi=200)
+fig.savefig(RESULTADOS / "matriz_confusion_paso7.png", dpi=200)
 plt.close(fig)
 print("\nGuardada: matriz_confusion_paso7.png")
 
@@ -463,12 +466,12 @@ detalle["prob_prediccion"] = probas.max(axis=1).round(3)
 errores = detalle[~detalle["acierto"]][
     ["id", "feedback", "polaridad_real", "prediccion", "contraste", "categoria_error",
      "direccion", "archivo_origen", "prob_negativo", "prob_neutral", "prob_positivo", "prob_prediccion"]]
-errores.to_csv(CARPETA / "errores_test.csv", index=False, sep=";")
+errores.to_csv(RESULTADOS / "errores_test.csv", index=False, sep=";")
 
 todas = test[["id", "polaridad_basica", "contraste", "archivo_origen"]].reset_index(drop=True).copy()
 for n, p in predicciones.items():
     todas[f"pred_{n}"] = p
-todas.to_csv(CARPETA / "predicciones_test.csv", index=False, sep=";")
+todas.to_csv(RESULTADOS / "predicciones_test.csv", index=False, sep=";")
 
 print(f"Errores: {len(errores)} de {len(test)} ({len(errores) / len(test):.1%})")
 print("\nPor tipo de error:")
@@ -512,7 +515,7 @@ registro = {
     "sha256_datos": huellas,
     "versiones": versiones,
 }
-with open(CARPETA / "registro_modelo_paso7.json", "w", encoding="utf-8") as f:
+with open(RESULTADOS / "registro_modelo_paso7.json", "w", encoding="utf-8") as f:
     json.dump(registro, f, ensure_ascii=False, indent=2)
 
 titulo("LISTO")

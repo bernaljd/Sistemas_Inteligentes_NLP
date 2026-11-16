@@ -4,7 +4,7 @@ Pruebas del punto 6 (imagen 3): control y reversion de versiones de los modelos.
 Las operaciones que cambian el registro se prueban sobre una COPIA de modelos/
 en una carpeta temporal: el registro real no se toca.
 
-Ejecutar:  python -m pytest test_versiones_modelo.py -v   (o: python test_versiones_modelo.py)
+Ejecutar (en la carpeta del proyecto):  python -m pytest tests/test_versiones_modelo.py -v   (o: python tests/test_versiones_modelo.py)
 """
 
 import json
@@ -16,6 +16,7 @@ from unittest import mock
 
 os.environ.setdefault("RUTA_REGISTRO", str(Path(tempfile.mkdtemp()) / "registro_versiones.jsonl"))
 
+from proyecto import CARPETA  # noqa: E402  # primero: agrega el proyecto al sys.path
 import joblib  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
@@ -25,7 +26,6 @@ import versiones_modelo as vm  # noqa: E402
 from carga_segura import ModeloNoConfiable, cargar_joblib_confiable, ruta_metadatos, sha256_archivo  # noqa: E402
 from compatibilidad import VersionesIncompatibles  # noqa: E402
 
-CARPETA = Path(__file__).resolve().parent
 _cliente = None
 
 

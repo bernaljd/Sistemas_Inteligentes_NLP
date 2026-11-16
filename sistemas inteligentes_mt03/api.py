@@ -18,7 +18,7 @@ Seguridad (paso 6):
   - Limite de tamano del cuerpo (6 MB, contando los bytes reales: tambien con
     Transfer-Encoding chunked) -> 413, textos <= 5000 caracteres, lotes <= 1000.
   - La IP del limite es la de la conexion: no se confia en X-Forwarded-For
-    (el Dockerfile no usa --proxy-headers; ver DESPLIEGUE.md si se pone un proxy).
+    (el Dockerfile no usa --proxy-headers; ver docs/DESPLIEGUE.md si se pone un proxy).
   - Cabeceras: Content-Security-Policy, X-Content-Type-Options, X-Frame-Options,
     Referrer-Policy, Permissions-Policy.
   - Sin CORS: la pagina se sirve desde el mismo origen (CORS_ORIGINS para abrirlo).

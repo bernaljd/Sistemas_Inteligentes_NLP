@@ -1,9 +1,14 @@
+from pathlib import Path
+
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
+CARPETA = Path(__file__).resolve().parent
+DATOS = CARPETA / "datos"  # feedback_preprocesado.csv -> train.csv, test.csv
+
 ETIQUETA = "polaridad_basica"
 
-df = pd.read_csv("feedback_preprocesado.csv", sep=";")
+df = pd.read_csv(DATOS / "feedback_preprocesado.csv", sep=";")
 print("Total de comentarios:", len(df))  # 618
 
 # Algunos comentarios quedaron sin etiqueta ni texto_limpio en el preprocesado.
@@ -37,6 +42,6 @@ print("\nProporcion de clases en test:")
 print(test[ETIQUETA].value_counts(normalize=True).round(3))
 
 # Guardar. test.csv NO se usa hasta el paso 7 (evaluacion final).
-train.to_csv("train.csv", index=False, sep=";")
-test.to_csv("test.csv", index=False, sep=";")
+train.to_csv(DATOS / "train.csv", index=False, sep=";")
+test.to_csv(DATOS / "test.csv", index=False, sep=";")
 print("\nGuardados: train.csv y test.csv")

@@ -57,8 +57,8 @@ def lanzar():
             shutil.copy2(info["ruta"].with_name(f), tmp / f)
         shutil.copy2(Path(__file__), tmp / Path(__file__).name)
 
-        test = pd.read_csv(proyecto / "test.csv", sep=";")
-        pred7 = pd.read_csv(proyecto / "predicciones_test.csv", sep=";")
+        test = pd.read_csv(proyecto / "datos" / "test.csv", sep=";")
+        pred7 = pd.read_csv(proyecto / "resultados" / "predicciones_test.csv", sep=";")
         assert (test["id"].to_numpy() == pred7["id"].to_numpy()).all()
         pd.DataFrame({"feedback": test["feedback"], "real": test["polaridad_basica"],
                       "esperada": pred7["pred_LogReg + TF-IDF+Emb"]}
@@ -71,9 +71,9 @@ def lanzar():
                               env={**_env_minimo(), "PYTHONIOENCODING": "utf-8"})
         salida = proc.stdout + (("\n[stderr]\n" + proc.stderr) if proc.returncode else "")
         print(salida)
-        (proyecto / "paso9_salida.txt").write_text(salida, encoding="utf-8")
+        (proyecto / "resultados" / "paso9_salida.txt").write_text(salida, encoding="utf-8")
         if (tmp / "validacion_casos.csv").exists():
-            shutil.copy2(tmp / "validacion_casos.csv", proyecto / "validacion_casos.csv")
+            shutil.copy2(tmp / "validacion_casos.csv", proyecto / "resultados" / "validacion_casos.csv")
     print("Guardados: paso9_salida.txt, validacion_casos.csv")
     sys.exit(proc.returncode)
 

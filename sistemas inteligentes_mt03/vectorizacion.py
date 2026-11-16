@@ -21,6 +21,7 @@ Salidas:
 """
 
 import os
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -30,11 +31,15 @@ from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.model_selection import StratifiedKFold, cross_val_predict, cross_validate
 from sklearn.pipeline import make_pipeline
 
+CARPETA = Path(__file__).resolve().parent
+DATOS = CARPETA / "datos"            # train.csv, test.csv, embeddings
+RESULTADOS = CARPETA / "resultados"  # tablas, salidas de consola y artefactos de cada paso
+
 ETIQUETA = "polaridad_basica"
 MODELO_EMBEDDINGS = "paraphrase-multilingual-MiniLM-L12-v2"  # entiende espanol
 SEMILLA = 42
 
-train = pd.read_csv("train.csv", sep=";")
+train = pd.read_csv(DATOS / "train.csv", sep=";")
 y = train[ETIQUETA]
 print(f"Train: {len(train)} comentarios")
 print(y.value_counts().to_string(), "\n")
@@ -85,7 +90,7 @@ def obtener_embeddings(textos, archivo_cache=None):
 
 # Los embeddings usan el texto original (feedback): estos modelos se entrenaron
 # con frases completas y aprovechan conectores como "sin embargo" o "aunque".
-X_embeddings = obtener_embeddings(train["feedback"], "embeddings_train.npy")
+X_embeddings = obtener_embeddings(train["feedback"], DATOS / "embeddings_train.npy")
 print(f"Forma de los embeddings: {X_embeddings.shape}\n")
 
 representaciones = {
@@ -115,7 +120,7 @@ for nombre, (modelo, X) in representaciones.items():
     })
 
 resultados = pd.DataFrame(filas).sort_values("macro_f1_media", ascending=False)
-resultados.to_csv("resultados_vectorizacion.csv", index=False, sep=";")
+resultados.to_csv(RESULTADOS / "resultados_vectorizacion.csv", index=False, sep=";")
 
 print("=" * 70)
 print("COMPARACION (validacion cruzada 5 particiones sobre train)")
@@ -145,7 +150,7 @@ errores["pred_tfidf"] = predicciones[mejor_tfidf]
 errores["pred_embeddings"] = predicciones[nombre_emb]
 errores["acierta_tfidf"] = errores["pred_tfidf"] == y
 errores["acierta_embeddings"] = errores["pred_embeddings"] == y
-errores.to_csv("errores_vectorizacion.csv", index=False, sep=";")
+errores.to_csv(RESULTADOS / "errores_vectorizacion.csv", index=False, sep=";")
 
 print("\n" + "=" * 70)
 print(f"ANALISIS DE ERRORES: {mejor_tfidf}  vs  Embeddings")

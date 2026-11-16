@@ -31,6 +31,8 @@ import time
 from pathlib import Path
 
 CARPETA = Path(__file__).resolve().parent
+DATOS = CARPETA / "datos"            # train.csv, test.csv, embeddings
+RESULTADOS = CARPETA / "resultados"  # tablas, salidas de consola y artefactos de cada paso
 parser = argparse.ArgumentParser(description="Paso 10a: tiempos y memoria del servicio")
 parser.add_argument("--url", help="URL del servicio desplegado (p. ej. http://127.0.0.1:8000)")
 parser.add_argument("--contenedor", help="nombre del contenedor Docker, para medir su memoria")
@@ -67,7 +69,7 @@ class Duplicar:
             x.flush()
 
 
-_salida = open(CARPETA / "paso10_rendimiento_salida.txt", "w", encoding="utf-8")
+_salida = open(RESULTADOS / "paso10_rendimiento_salida.txt", "w", encoding="utf-8")
 sys.stdout = Duplicar(sys.__stdout__, _salida)
 proceso = psutil.Process()
 
@@ -111,7 +113,7 @@ else:
     mem_cargado = mb()
     print(f"\n1. Arranque (importar + cargar + calentar): {arranque:.1f} s | memoria {mem0:.0f} -> {mem_cargado:.0f} MB")
 
-test = pd.read_csv(CARPETA / "test.csv", sep=";")
+test = pd.read_csv(DATOS / "test.csv", sep=";")
 textos = test["feedback"].tolist()
 filas = []
 
@@ -185,7 +187,7 @@ for k, lim in OBJETIVOS.items():
     print(f"  {k:<26} medido {medido[k]:>8.1f}   objetivo <= {lim:<6} {'CUMPLE' if medido[k] <= lim else 'NO CUMPLE'}")
     filas.append({"prueba": f"objetivo: {k}", "medido": medido[k], "objetivo": lim, "cumple": medido[k] <= lim})
 
-pd.DataFrame(filas).round(2).to_csv(CARPETA / "resultados_rendimiento.csv", index=False, sep=";")
+pd.DataFrame(filas).round(2).to_csv(RESULTADOS / "resultados_rendimiento.csv", index=False, sep=";")
 print("\nGuardados: resultados_rendimiento.csv, paso10_rendimiento_salida.txt")
 cliente.close() if ARGS.url else cliente.__exit__(None, None, None)
 sys.stdout = sys.__stdout__

@@ -38,6 +38,8 @@ from pipeline_feedback import UMBRAL_CONFIANZA, limpiar_texto, predecir
 from versiones_modelo import resolver
 
 CARPETA = Path(__file__).resolve().parent
+DATOS = CARPETA / "datos"            # train.csv, test.csv, embeddings
+RESULTADOS = CARPETA / "resultados"  # tablas, salidas de consola y artefactos de cada paso
 ETIQUETA, SEMILLA = "polaridad_basica", 42
 
 
@@ -54,7 +56,7 @@ class Duplicar:
             x.flush()
 
 
-_salida = open(CARPETA / "paso10_deriva_salida.txt", "w", encoding="utf-8")
+_salida = open(RESULTADOS / "paso10_deriva_salida.txt", "w", encoding="utf-8")
 sys.stdout = Duplicar(sys.__stdout__, _salida)
 
 _activa = resolver("polaridad")  # punto 6: la version activa de modelos/registro.json
@@ -62,8 +64,8 @@ paquete = cargar_joblib_confiable(_activa["ruta"], sha256=_activa["sha256"],
                                   fuente="modelos/registro.json")  # verifica sha256 antes de cargar
 modelo, meta = paquete["pipeline"], paquete["metadatos"]
 p = meta["parametros"]
-train = pd.read_csv(CARPETA / "train.csv", sep=";")
-test = pd.read_csv(CARPETA / "test.csv", sep=";")
+train = pd.read_csv(DATOS / "train.csv", sep=";")
+test = pd.read_csv(DATOS / "test.csv", sep=";")
 
 
 # ---------------------------------------------------------------------------
@@ -71,7 +73,7 @@ test = pd.read_csv(CARPETA / "test.csv", sep=";")
 # ---------------------------------------------------------------------------
 
 print("=" * 80 + "\n1. REFERENCIA (validacion cruzada 5-fold sobre train)\n" + "=" * 80)
-X_emb = np.load(CARPETA / "embeddings_train.npy")
+X_emb = np.load(DATOS / "embeddings_train.npy")
 cols = [f"emb_{i}" for i in range(X_emb.shape[1])]
 X = pd.concat([train[["texto_limpio"]], pd.DataFrame(X_emb, columns=cols)], axis=1)
 y = train[ETIQUETA]
@@ -157,7 +159,7 @@ for nombre, textos in escenarios.items():
                         "alertas": " | ".join(rep["alertas"])})
 
 tabla = pd.DataFrame(filas_tabla)
-tabla.to_csv(CARPETA / "resultados_deriva.csv", index=False, sep=";")
+tabla.to_csv(RESULTADOS / "resultados_deriva.csv", index=False, sep=";")
 
 print("\n" + "=" * 80 + "\nRESUMEN\n" + "=" * 80)
 print(tabla[["escenario", "estado"] + [c for c in tabla if c.startswith("psi_")]].round(3).to_string(index=False))
