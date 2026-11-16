@@ -75,19 +75,47 @@ log = logging.getLogger("api")
 estado_servicio = {}
 
 
-@asynccontextmanager
-async def lifespan(app):
+class ModeloNoDisponible(RuntimeError):
+    """El servicio no arranca: falta el modelo o no esta entrenado."""
+
+
+def cargar_servicio(ruta_modelo=RUTA_MODELO):
+    """Carga el modelo YA ENTRENADO una sola vez, al arrancar (punto 2: eficiencia).
+
+    El servicio NUNCA entrena: el entrenamiento es un paso aparte y offline
+    (paso8_guardar_modelo.py). Si el .joblib falta o trae un Pipeline sin
+    ajustar, el arranque falla con un mensaje claro en vez de reentrenar
+    (entrenar en cada arranque tardaria minutos y daria un modelo distinto
+    al evaluado en el paso 7).
+    """
+    from sklearn.exceptions import NotFittedError
+    from sklearn.utils.validation import check_is_fitted
+
     t0 = time.perf_counter()
-    paquete = joblib.load(RUTA_MODELO)  # archivo propio y de confianza
-    estado_servicio["modelo"] = paquete["pipeline"]
-    estado_servicio["metadatos"] = paquete["metadatos"]
-    estado_servicio["vocab"] = monitoreo.vocabulario(paquete["pipeline"])
+    if not Path(ruta_modelo).exists():
+        raise ModeloNoDisponible(f"No existe {Path(ruta_modelo).name}. El servicio no entrena: "
+                                 "genera el modelo con paso8_guardar_modelo.py.")
+    paquete = joblib.load(ruta_modelo)  # archivo propio y de confianza
+    modelo = paquete["pipeline"]
+    try:
+        check_is_fitted(modelo)
+    except NotFittedError as e:
+        raise ModeloNoDisponible(f"{Path(ruta_modelo).name} contiene un Pipeline sin entrenar: "
+                                 "regeneralo con paso8_guardar_modelo.py.") from e
+    estado = {"modelo": modelo, "metadatos": paquete["metadatos"],
+              "vocab": monitoreo.vocabulario(modelo)}
     if RUTA_REFERENCIA.exists():
         import json
-        estado_servicio["referencia"] = json.loads(RUTA_REFERENCIA.read_text(encoding="utf-8"))
+        estado["referencia"] = json.loads(RUTA_REFERENCIA.read_text(encoding="utf-8"))
     # Calentamiento: carga el modelo de embeddings ahora y no en la 1a peticion
-    predecir(estado_servicio["modelo"], ["calentamiento del modelo"])
-    estado_servicio["segundos_carga"] = round(time.perf_counter() - t0, 2)
+    predecir(modelo, ["calentamiento del modelo"])
+    estado["segundos_carga"] = round(time.perf_counter() - t0, 2)
+    return estado
+
+
+@asynccontextmanager
+async def lifespan(app):
+    estado_servicio.update(cargar_servicio())
     yield
     estado_servicio.clear()
 
@@ -306,6 +334,7 @@ def salud():
     m = estado_servicio.get("metadatos", {})
     return {"estado": "ok" if "modelo" in estado_servicio else "sin_modelo",
             "modelo": m.get("nombre"), "version_modelo": m.get("version_modelo"),
+            "entrenado_el": m.get("fecha"),  # se entreno antes (paso 8), no al arrancar
             "clases": CLASES, "segundos_carga": estado_servicio.get("segundos_carga")}
 
 

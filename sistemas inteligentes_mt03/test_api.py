@@ -119,6 +119,55 @@ def test_csv_columna_inexistente_y_archivo_vacio():
 
 
 # ---------------------------------------------------------------------------
+# Eficiencia: el servicio no entrena al arrancar (imagen 3, punto 2)
+# ---------------------------------------------------------------------------
+
+def test_arranque_no_entrena():
+    from unittest import mock
+
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.pipeline import FeatureUnion, Pipeline
+
+    import pipeline_feedback as pf
+
+    def prohibido(*a, **k):
+        raise AssertionError("El servicio intento ENTRENAR durante el arranque")
+
+    metodos = [(c, m) for c in (Pipeline, FeatureUnion, TfidfVectorizer, LogisticRegression,
+                                pf.EntradaTexto, pf.LimpiadorTexto, pf.EmbeddingsMiniLM)
+               for m in ("fit", "fit_transform") if hasattr(c, m)]
+    parches = [mock.patch.object(c, m, prohibido) for c, m in metodos]
+    for p in parches:
+        p.start()
+    try:
+        estado = api.cargar_servicio()  # carga + calentamiento, igual que el lifespan
+        r = pf.predecir(estado["modelo"], ["Excelente curso, aprendi mucho."])
+        assert r["estado"].iloc[0] == "ok"
+    finally:
+        for p in parches:
+            p.stop()
+    # el modelo servido es el entrenado en el paso 8, sin cambios
+    assert estado["metadatos"]["fecha"] == cliente().get("/salud").json()["entrenado_el"]
+
+
+def test_sin_modelo_falla_claro_y_no_entrena(tmp_path=None):
+    import joblib
+
+    from pipeline_feedback import construir_pipeline
+    tmp = Path(tmp_path or tempfile.mkdtemp())
+    for ruta, mensaje in [(tmp / "no_existe.joblib", "No existe"),
+                          (tmp / "sin_entrenar.joblib", "sin entrenar")]:
+        if "sin_entrenar" in ruta.name:
+            joblib.dump({"pipeline": construir_pipeline(), "metadatos": {}}, ruta)
+        try:
+            api.cargar_servicio(ruta)
+            raise AssertionError(f"{ruta.name}: el servicio arranco igual")
+        except api.ModeloNoDisponible as e:
+            assert mensaje in str(e) and "paso8_guardar_modelo.py" in str(e)
+
+
+# ---------------------------------------------------------------------------
 # Seguridad (paso 6)
 # ---------------------------------------------------------------------------
 

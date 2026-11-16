@@ -34,6 +34,18 @@ disco) dio p95 de 1076 ms, 15.8 s para el lote de 100 y 167 s de arranque: el se
 ~1 GB de RAM libre. Casi todo el tiempo se va en los embeddings MiniLM; TF-IDF y la regresión
 logística toman milisegundos.
 
+### Eficiencia: el servicio no entrena
+
+El entrenamiento es un paso aparte y offline (`paso8_guardar_modelo.py`). Al arrancar, la API
+solo **carga** `modelo_final.joblib` una vez (`cargar_servicio()`), calienta el modelo de
+embeddings y sirve; por eso arranca en ~5 s en vez de minutos, y siempre sirve exactamente el
+modelo evaluado en el paso 7 (`/salud` muestra `entrenado_el`).
+
+- Si falta el `.joblib` o trae un Pipeline sin entrenar, el servicio **no arranca** y dice que se
+  ejecute el paso 8; nunca reentrena por su cuenta.
+- `test_arranque_no_entrena` bloquea todos los `fit` del Pipeline durante la carga: si alguien
+  agrega un entrenamiento al arranque, la prueba falla.
+
 ### Seguridad implementada
 
 - **Límite de peticiones**: 60 por minuto por IP en `/predecir*` → `429` con `Retry-After`.
@@ -143,6 +155,6 @@ si baja, reentrenar con los pasos 6–8 y regenerar la referencia con `paso10_de
 | `monitoreo.py` | Registro, referencia y reporte de deriva (PSI) |
 | `paso10_rendimiento.py` | Medición de tiempos y memoria (en proceso o contra el contenedor con `--url`) |
 | `paso10_deriva.py` | Crea la referencia y valida el monitor con 5 escenarios |
-| `test_api.py` | 22 pruebas: funcionalidad, seguridad y monitoreo |
+| `test_api.py` | 24 pruebas: funcionalidad, eficiencia, seguridad y monitoreo |
 | `Dockerfile`, `.dockerignore` | Imagen de despliegue |
 | `requirements_app.txt`, `requirements_dev.txt` | Dependencias de producción y de pruebas |
