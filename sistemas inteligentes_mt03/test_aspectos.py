@@ -18,6 +18,7 @@ from fastapi.testclient import TestClient  # noqa: E402
 import api  # noqa: E402
 from aspectos import ASPECTOS, CLAVES, GRUPO_DE, etiquetas, fragmentos  # noqa: E402
 from carga_segura import ModeloNoConfiable, cargar_joblib_confiable  # noqa: E402
+from versiones_modelo import ruta_activa  # noqa: E402
 
 CARPETA = Path(__file__).resolve().parent
 CAMPOS = {"aspecto", "nombre", "mencionado", "probabilidad", "sentimiento", "probabilidades_sentimiento"}
@@ -28,7 +29,7 @@ _cliente = None
 def modelo():
     global _modelo
     if _modelo is None:
-        _modelo = cargar_joblib_confiable(CARPETA / "modelo_aspectos.joblib", variable_sha256="ASPECTOS_SHA256")
+        _modelo = cargar_joblib_confiable(ruta_activa("aspectos"), variable_sha256="ASPECTOS_SHA256")
     return _modelo
 
 
@@ -140,7 +141,7 @@ def test_api_devuelve_aspectos_en_cada_prediccion():
 def test_api_salud_y_metadatos_de_aspectos():
     s = cliente().get("/salud").json()["aspectos"]
     assert s["aspectos"] == CLAVES and s["compatibilidad"]["estado"] == "ok"
-    assert s["integridad"]["verificado_con"] == "modelo_aspectos_metadatos.json"
+    assert s["integridad"]["verificado_con"] == "modelos/registro.json"  # punto 6
     m = cliente().get("/modelo/aspectos").json()
     assert list(m["aspectos"]) == CLAVES and "presencia_macro_f1_test" in m["metricas"]
 
@@ -152,13 +153,14 @@ def test_servicio_sin_modelo_de_aspectos_funciona():
 
 def test_huella_de_aspectos_independiente_de_la_de_polaridad():
     tmp = Path(tempfile.mkdtemp(prefix="aspectos_"))
-    for f in ["modelo_final.joblib", "modelo_final_metadatos.json",
-              "modelo_aspectos.joblib", "modelo_aspectos_metadatos.json"]:
-        shutil.copy2(CARPETA / f, tmp / f)
+    for familia in ("polaridad", "aspectos"):
+        ruta = ruta_activa(familia)
+        for f in (ruta, ruta.with_name(f"{ruta.stem}_metadatos.json")):
+            shutil.copy2(f, tmp / f.name)
     anterior = {k: os.environ.get(k) for k in ("MODELO_SHA256", "ASPECTOS_SHA256")}
     try:
         # la huella de polaridad fijada por variable no debe aplicarse al modelo de aspectos
-        meta = json.loads((CARPETA / "modelo_final_metadatos.json").read_text(encoding="utf-8"))
+        meta = json.loads((tmp / "modelo_final_metadatos.json").read_text(encoding="utf-8"))
         os.environ["MODELO_SHA256"] = meta["sha256_modelo_final.joblib"]
         os.environ.pop("ASPECTOS_SHA256", None)
         estado = api.cargar_servicio(tmp / "modelo_final.joblib", carpeta_permitida=tmp,

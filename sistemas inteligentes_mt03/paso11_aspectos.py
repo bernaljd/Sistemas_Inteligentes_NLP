@@ -16,10 +16,11 @@ Misma disciplina que los pasos 5-8:
   3. TEST (una sola vez): presencia P/R/F1 por aspecto, sentimiento y la
      exactitud de la salida estructurada completa.
   4. GUARDADO: modelo_aspectos.joblib + modelo_aspectos_metadatos.json
-     (sha256 y versiones: los cargan carga_segura.py y compatibilidad.py).
+     (sha256 y versiones: los cargan carga_segura.py y compatibilidad.py)
+     en modelos/aspectos/<VERSION_MODELO>/, registrada como candidata (punto 6).
 
 Uso:  python paso11_aspectos.py
-Salidas: modelo_aspectos.joblib, modelo_aspectos_metadatos.json,
+Salidas: modelos/aspectos/<version>/ (modelo, metadatos, firma),
          resultados_aspectos.csv, paso11_salida.txt
 """
 
@@ -39,10 +40,20 @@ from sklearn.model_selection import KFold
 
 from aspectos import ASPECTOS, CLAVES, ModeloAspectos, etiquetas
 from pipeline_feedback import CLASES, MODELO_EMBEDDINGS, REVISION_EMBEDDINGS
+from versiones_modelo import leer_registro, registrar, ruta_version
 
 CARPETA = Path(__file__).resolve().parent
 SEMILLA = 42
 VERSION_MODELO = "1.0.0"
+
+
+# Punto 6: cada version es inmutable. Si esta ya esta registrada no se reentrena
+# encima: hay que subir VERSION_MODELO (y luego promoverla con versiones_modelo.py).
+if VERSION_MODELO in leer_registro()["familias"]["aspectos"]["versiones"]:
+    sys.exit(f"La version {VERSION_MODELO} de 'aspectos' ya esta registrada en modelos/registro.json: "
+             "las versiones no se sobrescriben. Sube VERSION_MODELO para guardar una nueva.")
+DESTINO = ruta_version("aspectos", VERSION_MODELO)  # modelos/aspectos/<version>/modelo_aspectos.joblib
+DESTINO.parent.mkdir(parents=True, exist_ok=True)
 DISENO = "fragmento+comentario"
 
 
@@ -259,12 +270,18 @@ metadatos = {
     "versiones": versiones,
     "dependencia_codigo": "aspectos.py y pipeline_feedback.py deben estar importables al cargar el .joblib",
 }
-joblib.dump({"modelo": modelo, "metadatos": metadatos}, CARPETA / "modelo_aspectos.joblib", compress=3)
-metadatos["sha256_modelo_aspectos.joblib"] = sha256(CARPETA / "modelo_aspectos.joblib")
-with open(CARPETA / "modelo_aspectos_metadatos.json", "w", encoding="utf-8") as fh:
+joblib.dump({"modelo": modelo, "metadatos": metadatos}, DESTINO, compress=3)
+metadatos["sha256_modelo_aspectos.joblib"] = sha256(DESTINO)
+with open(DESTINO.with_name("modelo_aspectos_metadatos.json"), "w", encoding="utf-8") as fh:
     json.dump(metadatos, fh, ensure_ascii=False, indent=2)
-tam = (CARPETA / "modelo_aspectos.joblib").stat().st_size / 1024
-print(f"Guardados: modelo_aspectos.joblib ({tam:.0f} KB), modelo_aspectos_metadatos.json,")
+tam = DESTINO.stat().st_size / 1024
+print(f"Guardados en {DESTINO.parent.relative_to(CARPETA).as_posix()}/: modelo_aspectos.joblib ({tam:.0f} KB), "
+      "modelo_aspectos_metadatos.json")
 print("           resultados_aspectos.csv, paso11_salida.txt")
+res = registrar("aspectos", DESTINO, motivo=f"entrenada con paso11_aspectos.py ({DISENO})")
+print(f"Registrada aspectos {res['version']} en modelos/registro.json (activa: {res['activa']}).")
+if res["activa"] != res["version"]:
+    print(f"Para ponerla en servicio: python versiones_modelo.py promover aspectos {res['version']} "
+          '--motivo "..."')
 sys.stdout = sys.__stdout__
 _salida.close()

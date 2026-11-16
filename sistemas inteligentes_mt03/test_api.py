@@ -18,6 +18,7 @@ from fastapi.testclient import TestClient  # noqa: E402
 
 import api  # noqa: E402
 from api import MAX_TEXTOS_LOTE, app  # noqa: E402
+from versiones_modelo import ruta_activa  # noqa: E402
 
 _cliente = None
 
@@ -170,7 +171,7 @@ def test_sin_modelo_falla_claro_y_no_entrena(tmp_path=None):
             from carga_segura import ruta_metadatos, sha256_archivo
             # con las mismas versiones del modelo real (compatibles con este entorno)
             versiones = api.estado_servicio["metadatos"]["versiones"] if api.estado_servicio else \
-                json.loads(ruta_metadatos(api.RUTA_MODELO).read_text(encoding="utf-8"))["versiones"]
+                json.loads(ruta_metadatos(ruta_activa("polaridad")).read_text(encoding="utf-8"))["versiones"]
             joblib.dump({"pipeline": construir_pipeline(), "metadatos": {"versiones": versiones}}, ruta)
             ruta_metadatos(ruta).write_text(json.dumps({f"sha256_{ruta.name}": sha256_archivo(ruta),
                                                         "versiones": versiones}))

@@ -24,7 +24,7 @@ el codigo del archivo nunca llega a ejecutarse.
 
 Uso:
     from carga_segura import cargar_joblib_confiable
-    paquete = cargar_joblib_confiable("modelo_final.joblib")
+    paquete = cargar_joblib_confiable("modelos/polaridad/1.1.0/modelo_final.joblib")
 
 Limite: esto garantiza que el archivo es el que se registro, no que quien lo
 registro sea de confianza. El .joblib y su huella deben venir del propio
@@ -100,10 +100,12 @@ def huella_en_registro(ruta_registro, nombre_archivo):
     return valor
 
 
-def cargar_joblib_confiable(ruta, sha256=None, carpeta_permitida=CARPETA, variable_sha256="MODELO_SHA256"):
+def cargar_joblib_confiable(ruta, sha256=None, carpeta_permitida=CARPETA, variable_sha256="MODELO_SHA256",
+                            fuente=None):
     """Carga un .joblib solo si esta en la carpeta permitida y su sha256 coincide.
 
     sha256: huella esperada; si no se da, se busca con huella_esperada().
+    fuente: de donde sale sha256 (para el mensaje de error; p. ej. modelos/registro.json).
     carpeta_permitida: None desactiva la restriccion de carpeta (solo pruebas).
     """
     ruta = Path(ruta)
@@ -117,7 +119,7 @@ def cargar_joblib_confiable(ruta, sha256=None, carpeta_permitida=CARPETA, variab
     if carpeta_permitida is not None and not real.is_relative_to(Path(carpeta_permitida).resolve()):
         raise ModeloNoConfiable(f"{real} esta fuera de la carpeta permitida ({carpeta_permitida}).")
 
-    esperado, fuente = ((sha256.strip().lower(), "argumento sha256") if sha256
+    esperado, fuente = ((sha256.strip().lower(), fuente or "argumento sha256") if sha256
                         else huella_esperada(real, variable_sha256))
     if not _HEX64.fullmatch(esperado):
         raise ModeloNoConfiable(f"La huella esperada ({fuente}) no es un sha256 valido.")

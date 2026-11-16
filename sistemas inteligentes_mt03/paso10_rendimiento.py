@@ -42,6 +42,8 @@ import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 import psutil  # noqa: E402
 
+from versiones_modelo import ruta_activa  # noqa: E402
+
 # Objetivos fijados ANTES de medir (uso interactivo de una pagina web)
 OBJETIVOS = {
     "p95 un comentario (ms)": 500,
@@ -83,7 +85,7 @@ print(f"CPU: {platform.processor()} | nucleos logicos: {psutil.cpu_count()} | "
       f"RAM: {psutil.virtual_memory().total / 1024 ** 3:.1f} GB | Python {platform.python_version()}")
 print(f"Modo: {'servicio desplegado ' + ARGS.url if ARGS.url else 'TestClient en proceso'}"
       + (f" | contenedor {ARGS.contenedor}" if ARGS.contenedor else ""))
-print(f"Tamano de modelo_final.joblib: {(CARPETA / 'modelo_final.joblib').stat().st_size / 1024:.0f} KB "
+print(f"Tamano de modelo_final.joblib: {ruta_activa('polaridad').stat().st_size / 1024:.0f} KB "
       "(+ ~470 MB del modelo MiniLM en la cache de Hugging Face)")
 mem0 = mb()
 

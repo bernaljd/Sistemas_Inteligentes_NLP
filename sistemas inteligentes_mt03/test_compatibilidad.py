@@ -23,9 +23,10 @@ import joblib
 
 import compatibilidad as cp
 from carga_segura import ruta_metadatos, sha256_archivo
+from versiones_modelo import ruta_activa
 
 CARPETA = Path(__file__).resolve().parent
-META = json.loads((CARPETA / "modelo_final_metadatos.json").read_text(encoding="utf-8"))
+META = json.loads(ruta_metadatos(ruta_activa("polaridad")).read_text(encoding="utf-8"))
 REGISTRADAS = META["versiones"]
 
 
@@ -141,7 +142,7 @@ def test_api_sin_versiones_registradas_no_arranca():
     import api
 
     tmp = Path(tempfile.mkdtemp(prefix="compat_"))
-    shutil.copy2(CARPETA / "modelo_final.joblib", tmp)
+    shutil.copy2(ruta_activa("polaridad"), tmp)
     meta = {k: v for k, v in META.items() if k != "versiones"}
     ruta_metadatos(tmp / "modelo_final.joblib").write_text(json.dumps(meta), encoding="utf-8")
     try:

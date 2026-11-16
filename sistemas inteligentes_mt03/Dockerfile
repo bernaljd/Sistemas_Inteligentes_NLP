@@ -31,12 +31,14 @@ SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2', revision='${REVISIO
 RUN pip check
 
 # Solo lo necesario para servir (nada de train/test ni scripts de entrenamiento)
-COPY api.py pipeline_feedback.py aspectos.py monitoreo.py carga_segura.py compatibilidad.py ./
-# El modelo viaja con su huella sha256 (modelo_final_metadatos.json): la API no lo
-# deserializa si no coinciden. Para fijarla fuera de la imagen: -e MODELO_SHA256=...
-COPY modelo_final.joblib modelo_final_metadatos.json ./
-# Punto 5: modelo de 9 aspectos (opcional para la API), tambien con su huella
-COPY modelo_aspectos.joblib modelo_aspectos_metadatos.json ./
+COPY api.py pipeline_feedback.py aspectos.py monitoreo.py carga_segura.py compatibilidad.py      versiones_modelo.py ./
+# Punto 6: TODAS las versiones registradas viajan en la imagen (pesan ~0.3 MB cada
+# una), asi se puede volver a una anterior sin reconstruir: -e MODELO_VERSION=1.1.0.
+# La API carga la activa de modelos/registro.json y no deserializa nada cuya
+# huella sha256 no coincida (puntos 3 y 6). Huella fija desde fuera: -e MODELO_SHA256=...
+COPY modelos/ ./modelos/
+# El build falla si algun archivo de modelo no coincide con su huella registrada
+RUN python versiones_modelo.py verificar
 COPY web/ ./web/
 COPY monitoreo/referencia.json ./monitoreo/referencia.json
 

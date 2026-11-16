@@ -31,8 +31,8 @@ import sys
 import tempfile
 from pathlib import Path
 
-ARCHIVOS = ["modelo_final.joblib", "modelo_final_metadatos.json", "pipeline_feedback.py",
-            "carga_segura.py", "compatibilidad.py"]
+CODIGO = ["pipeline_feedback.py", "carga_segura.py", "compatibilidad.py"]
+MODELO = ["modelo_final.joblib", "modelo_final_metadatos.json"]  # de modelos/polaridad/<version>/
 
 
 # ---------------------------------------------------------------------------
@@ -42,11 +42,19 @@ ARCHIVOS = ["modelo_final.joblib", "modelo_final_metadatos.json", "pipeline_feed
 def lanzar():
     import pandas as pd
 
+    from versiones_modelo import resolver
+
     proyecto = Path(__file__).resolve().parent
+    # Punto 6: se valida la version activa, o la indicada con --version X.Y.Z
+    version = sys.argv[sys.argv.index("--version") + 1] if "--version" in sys.argv else None
+    info = resolver("polaridad", version)
+    print(f"Version validada: polaridad {info['version']} ({info['fuente']})")
     with tempfile.TemporaryDirectory(prefix="entorno_limpio_") as tmp:
         tmp = Path(tmp)
-        for f in ARCHIVOS:
+        for f in CODIGO:
             shutil.copy2(proyecto / f, tmp / f)
+        for f in MODELO:
+            shutil.copy2(info["ruta"].with_name(f), tmp / f)
         shutil.copy2(Path(__file__), tmp / Path(__file__).name)
 
         test = pd.read_csv(proyecto / "test.csv", sep=";")

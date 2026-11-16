@@ -35,6 +35,7 @@ from sklearn.pipeline import Pipeline
 import monitoreo
 from carga_segura import cargar_joblib_confiable
 from pipeline_feedback import UMBRAL_CONFIANZA, limpiar_texto, predecir
+from versiones_modelo import resolver
 
 CARPETA = Path(__file__).resolve().parent
 ETIQUETA, SEMILLA = "polaridad_basica", 42
@@ -56,7 +57,9 @@ class Duplicar:
 _salida = open(CARPETA / "paso10_deriva_salida.txt", "w", encoding="utf-8")
 sys.stdout = Duplicar(sys.__stdout__, _salida)
 
-paquete = cargar_joblib_confiable(CARPETA / "modelo_final.joblib")  # verifica sha256 antes de cargar
+_activa = resolver("polaridad")  # punto 6: la version activa de modelos/registro.json
+paquete = cargar_joblib_confiable(_activa["ruta"], sha256=_activa["sha256"],
+                                  fuente="modelos/registro.json")  # verifica sha256 antes de cargar
 modelo, meta = paquete["pipeline"], paquete["metadatos"]
 p = meta["parametros"]
 train = pd.read_csv(CARPETA / "train.csv", sep=";")

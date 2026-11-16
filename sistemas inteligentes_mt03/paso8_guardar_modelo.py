@@ -19,9 +19,10 @@ Paso 8: Seleccionar el mejor modelo y guardarlo con joblib.
    test del paso 7 siguen siendo validas para este archivo, y se VERIFICA que da
    las mismas probabilidades que modelo_paso6.joblib.
 
-Salidas:
+Salidas (punto 6: en modelos/polaridad/<VERSION_MODELO>/, registrada como candidata):
   - modelo_final.joblib             : {"pipeline", "metadatos"}
   - modelo_final_metadatos.json     : metricas, parametros, datos y versiones (legible)
+  - firma.json                      : predicciones de referencia (versiones_modelo.py)
   - requirements_modelo.txt         : versiones exactas para cargar el modelo
   - paso8_salida.txt                : copia de la consola
 """
@@ -40,12 +41,22 @@ import numpy as np
 import pandas as pd
 
 from carga_segura import cargar_joblib_confiable, huella_en_registro
+from versiones_modelo import leer_registro, registrar, ruta_version
 from pipeline_feedback import (CLASES, MODELO_EMBEDDINGS, REVISION_EMBEDDINGS, STOPWORDS,
                                UMBRAL_CONFIANZA, construir_pipeline, limpiar_texto)
 
 CARPETA = Path(__file__).resolve().parent
 ETIQUETA = "polaridad_basica"
 VERSION_MODELO = "1.1.0"  # 1.1.0: paso "entrada" + revision de embeddings fijada
+
+
+# Punto 6: cada version es inmutable. Si esta ya esta registrada no se reentrena
+# encima: hay que subir VERSION_MODELO (y luego promoverla con versiones_modelo.py).
+if VERSION_MODELO in leer_registro()["familias"]["polaridad"]["versiones"]:
+    sys.exit(f"La version {VERSION_MODELO} de 'polaridad' ya esta registrada en modelos/registro.json: "
+             "las versiones no se sobrescriben. Sube VERSION_MODELO para guardar una nueva.")
+DESTINO = ruta_version("polaridad", VERSION_MODELO)  # modelos/polaridad/<version>/modelo_final.joblib
+DESTINO.parent.mkdir(parents=True, exist_ok=True)
 
 
 class Duplicar:
@@ -238,10 +249,9 @@ metadatos = {
     "dependencia_codigo": "pipeline_feedback.py debe estar importable al cargar el .joblib",
 }
 
-joblib.dump({"pipeline": pipeline, "metadatos": metadatos}, CARPETA / "modelo_final.joblib",
-            compress=3)
-metadatos["sha256_modelo_final.joblib"] = sha256(CARPETA / "modelo_final.joblib")
-with open(CARPETA / "modelo_final_metadatos.json", "w", encoding="utf-8") as f:
+joblib.dump({"pipeline": pipeline, "metadatos": metadatos}, DESTINO, compress=3)
+metadatos["sha256_modelo_final.joblib"] = sha256(DESTINO)
+with open(DESTINO.with_name("modelo_final_metadatos.json"), "w", encoding="utf-8") as f:
     json.dump(metadatos, f, ensure_ascii=False, indent=2)
 
 with open(CARPETA / "requirements_modelo.txt", "w", encoding="utf-8") as f:
@@ -252,8 +262,16 @@ with open(CARPETA / "requirements_modelo.txt", "w", encoding="utf-8") as f:
             # sin etiqueta local (+cpu, +cu121): la variante de torch la elige el Dockerfile
             f.write(f"{p}=={versiones[p].split('+')[0]}\n")
 
-tam = (CARPETA / "modelo_final.joblib").stat().st_size / 1024
-print(f"\nGuardados: modelo_final.joblib ({tam:.0f} KB), modelo_final_metadatos.json,")
+tam = DESTINO.stat().st_size / 1024
+print(f"\nGuardados en {DESTINO.parent.relative_to(CARPETA).as_posix()}/: modelo_final.joblib ({tam:.0f} KB), "
+      "modelo_final_metadatos.json")
 print("           requirements_modelo.txt, paso8_salida.txt")
+
+# Punto 6: queda registrada como CANDIDATA; la API sigue con la activa hasta promoverla
+res = registrar("polaridad", DESTINO, motivo=f"entrenada con paso8_guardar_modelo.py ({elegido})")
+print(f"Registrada polaridad {res['version']} en modelos/registro.json (activa: {res['activa']}).")
+if res["activa"] != res["version"]:
+    print(f"Para ponerla en servicio: python versiones_modelo.py promover polaridad {res['version']} "
+          '--motivo "..."')
 sys.stdout = sys.__stdout__
 _salida.close()

@@ -22,9 +22,10 @@ import joblib
 import carga_segura
 from carga_segura import (ModeloNoConfiable, cargar_joblib_confiable, ruta_metadatos,
                           sha256_archivo)
+from versiones_modelo import ruta_activa
 
 CARPETA = Path(__file__).resolve().parent
-MODELO = CARPETA / "modelo_final.joblib"
+MODELO = ruta_activa("polaridad")  # modelos/polaridad/<version activa>/modelo_final.joblib
 
 
 class Malicioso:

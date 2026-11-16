@@ -1,11 +1,13 @@
 """
 Pasos 4-6: Servicio de prediccion (FastAPI) + pagina web + seguridad + monitoreo.
 
-Carga modelo_final.joblib UNA vez al arrancar y expone:
+Carga la version activa de los modelos (modelos/registro.json) UNA vez al
+arrancar y expone:
   GET  /                 pagina web para docentes (carpeta web/)
   GET  /salud            estado del servicio y del modelo
   GET  /modelo           metadatos (metricas, parametros, versiones, datos)
   GET  /modelo/aspectos  metadatos del modelo de 9 aspectos (punto 5)
+  GET  /modelo/versiones versiones registradas, activas e historial (punto 6)
   POST /predecir         un comentario      {"texto": "..."}
   POST /predecir/lote    varios comentarios {"textos": ["...", "..."]}
   POST /predecir/csv     archivo CSV (multipart) + ?columna=feedback
@@ -33,11 +35,17 @@ Salida estructurada (imagen 3, punto 5): cada prediccion trae "aspectos", una
 lista con los 9 aspectos (aspectos.py), cada uno con mencionado, probabilidad,
 sentimiento y probabilidades_sentimiento. Siempre los 9 y en el mismo orden.
 
+Control de versiones (imagen 3, punto 6): versiones_modelo.py registra cada
+modelo entrenado como version inmutable en modelos/, y promueve o revierte cual
+carga la API; /salud dice que version se cargo y de donde.
+
 Variables de entorno (todas opcionales):
   RATE_LIMIT=60  DOCS=1  MONITOREO=1  ADMIN_TOKEN=  CORS_ORIGINS=  FRAME_ANCESTORS='none'
   RUTA_REGISTRO=monitoreo/predicciones.jsonl
-  MODELO_SHA256=  (huella esperada del modelo; si falta, la de modelo_final_metadatos.json)
-  ASPECTOS_SHA256=  (igual, para modelo_aspectos.joblib)
+  MODELO_VERSION=  (version de polaridad a cargar; si falta, la activa de modelos/registro.json)
+  ASPECTOS_VERSION=  (igual, para el modelo de aspectos)
+  MODELO_SHA256=  (huella esperada del modelo; si falta, la de modelos/registro.json)
+  ASPECTOS_SHA256=  (igual, para el modelo de aspectos)
   VERSIONES_ESTRICTAS=0  (1 = cualquier version distinta a la del modelo impide arrancar)
 
 Ejecutar (en esta carpeta):
@@ -62,14 +70,12 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 import monitoreo
-from carga_segura import cargar_joblib_confiable, huella_esperada, ruta_metadatos
-from compatibilidad import VersionesIncompatibles, exigir_compatibles
 from aspectos import CLAVES as CLAVES_ASPECTOS
 from pipeline_feedback import CLASES, leer_csv_bytes, predecir
+from versiones_modelo import (CARPETA_MODELOS, FAMILIAS, ErrorVersiones, calcular_firma, cargar_verificado,
+                              comparar_firma, firma_guardada, resolver, resumen)
 
 CARPETA = Path(__file__).resolve().parent
-RUTA_MODELO = CARPETA / "modelo_final.joblib"
-RUTA_ASPECTOS = CARPETA / "modelo_aspectos.joblib"   # punto 5 (opcional: sin el, aspectos = null)
 RUTA_REFERENCIA = CARPETA / "monitoreo" / "referencia.json"
 RUTA_REGISTRO = Path(os.environ.get("RUTA_REGISTRO", CARPETA / "monitoreo" / "predicciones.jsonl"))
 
@@ -95,46 +101,50 @@ class ModeloNoDisponible(RuntimeError):
     """El servicio no arranca: falta el modelo o no esta entrenado."""
 
 
-def cargar_verificado(ruta, carpeta_permitida, variable_sha256):
-    """Puntos 3 y 4 para cualquier .joblib del servicio.
+def _cargar_version(familia, ruta, carpeta_permitida, carpeta_modelos):
+    """Resuelve que .joblib cargar y lo carga verificado (puntos 3, 4 y 6).
 
-    1. Versiones: compara las registradas en <nombre>_metadatos.json (leer JSON
-       no ejecuta codigo) con las instaladas ANTES de deserializar.
-    2. Huella sha256 (carga_segura.py) y carga; un InconsistentVersionWarning de
-       scikit-learn al cargar tambien es incompatibilidad.
-    3. Las versiones dentro del .joblib deben ser las del JSON.
-    Devuelve (paquete, compatibilidad, integridad).
+    ruta=None: la version de MODELO_VERSION / ASPECTOS_VERSION o la activa de
+    modelos/registro.json (punto 6); la huella esperada sale del registro y,
+    tras cargar, se comprueba la firma de comportamiento de esa version.
+    ruta dada: ese archivo, con la huella de sus metadatos (pruebas).
+    Devuelve (paquete, compatibilidad, integridad, version) o None si es el
+    modelo de aspectos y no hay ninguno.
     """
-    import warnings
+    cfg = FAMILIAS[familia]
+    if ruta is not None:
+        if not Path(ruta).exists():
+            if familia == "aspectos":
+                return None
+            raise ModeloNoDisponible(f"No existe {Path(ruta).name}. El servicio no entrena: "
+                                     "genera el modelo con paso8_guardar_modelo.py.")
+        paquete, compat, integ = cargar_verificado(ruta, carpeta_permitida, cfg["variable_sha256"])
+        return paquete, compat, integ, {"version": paquete["metadatos"].get("version_modelo"),
+                                        "fuente": f"archivo {Path(ruta).name}", "firma": None}
+    try:
+        info = resolver(familia, carpeta_modelos=carpeta_modelos)
+    except ErrorVersiones as e:
+        if familia == "aspectos" and not os.environ.get(cfg["variable_version"]):
+            return None
+        raise ModeloNoDisponible(str(e)) from e
+    if not info["ruta"].exists():
+        raise ModeloNoDisponible(f"Falta {info['ruta'].name} "
+                                 f"({familia} {info['version']}).")
+    paquete, compat, integ = cargar_verificado(info["ruta"], carpeta_modelos, cfg["variable_sha256"],
+                                               sha256=info["sha256"])
+    # La firma tambien sirve de calentamiento (carga los embeddings ahora y no en la 1a peticion)
+    firma = comparar_firma(firma_guardada(familia, info["version"], carpeta_modelos),
+                           calcular_firma(familia, paquete))
+    if not firma["coincide"]:
+        raise ModeloNoDisponible(
+            f"{familia} {info['version']}: el codigo instalado no reproduce las predicciones de esta "
+            f"version ({firma['motivo']}). Usa el codigo del commit {info['entrada'].get('commit')} "
+            "o vuelve a otra version (versiones_modelo.py revertir).")
+    return paquete, compat, integ, {"version": info["version"], "fuente": info["fuente"], "firma": firma}
 
-    from sklearn.exceptions import InconsistentVersionWarning
 
-    ruta = Path(ruta)
-    meta_json = ruta_metadatos(ruta)
-    registradas = (json.loads(meta_json.read_text(encoding="utf-8")).get("versiones")
-                   if meta_json.is_file() else None)
-    if not registradas:
-        raise VersionesIncompatibles(f"{meta_json.name} no registra las versiones con que se entreno "
-                                     "el modelo: no se puede garantizar la compatibilidad.")
-    compat = exigir_compatibles(registradas)  # antes de deserializar
-    for d in compat["diferencias"]:
-        log.warning("%s: version distinta a la del modelo: %s (modelo %s, instalada %s)",
-                    ruta.name, d["paquete"], d["registrada"], d["instalada"])
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", InconsistentVersionWarning)  # aviso de sklearn -> error
-        try:
-            paquete = cargar_joblib_confiable(ruta, carpeta_permitida=carpeta_permitida,
-                                              variable_sha256=variable_sha256)
-        except InconsistentVersionWarning as e:
-            raise VersionesIncompatibles(f"scikit-learn avisa de versiones distintas al cargar: {e}") from e
-    if paquete["metadatos"].get("versiones") != registradas:
-        raise VersionesIncompatibles(f"Las versiones dentro de {ruta.name} no coinciden "
-                                     f"con {meta_json.name}: regeneralos juntos.")
-    sha256, fuente = huella_esperada(ruta, variable_sha256)
-    return paquete, compat, {"sha256": sha256, "verificado_con": fuente}
-
-
-def cargar_servicio(ruta_modelo=RUTA_MODELO, carpeta_permitida=CARPETA, ruta_aspectos=RUTA_ASPECTOS):
+def cargar_servicio(ruta_modelo=None, carpeta_permitida=CARPETA, ruta_aspectos=None,
+                    carpeta_modelos=CARPETA_MODELOS):
     """Carga el modelo YA ENTRENADO una sola vez, al arrancar (punto 2: eficiencia).
 
     El servicio NUNCA entrena: el entrenamiento es un paso aparte y offline
@@ -144,52 +154,60 @@ def cargar_servicio(ruta_modelo=RUTA_MODELO, carpeta_permitida=CARPETA, ruta_asp
     al evaluado en el paso 7).
 
     Punto 3 (seguridad): el .joblib se carga con cargar_joblib_confiable(): solo
-    desde la carpeta del proyecto y solo si su sha256 coincide con el registrado
-    (MODELO_SHA256 o modelo_final_metadatos.json). Si no, ModeloNoConfiable y el
+    desde la carpeta de modelos y solo si su sha256 coincide con el registrado
+    (MODELO_SHA256 o modelos/registro.json). Si no, ModeloNoConfiable y el
     servicio no arranca: el archivo nunca se deserializa.
 
     Punto 4 (versiones): ANTES de deserializar se comparan las versiones
-    registradas en modelo_final_metadatos.json (leer JSON no ejecuta codigo) con
-    las instaladas (compatibilidad.py). Si Python (mayor.menor), scikit-learn o
+    registradas en los metadatos (leer JSON no ejecuta codigo) con las
+    instaladas (compatibilidad.py). Si Python (mayor.menor), scikit-learn o
     joblib difieren, VersionesIncompatibles y el servicio no arranca; el resto
     se informa en /salud. Al cargar, un InconsistentVersionWarning de
     scikit-learn tambien se trata como incompatibilidad.
 
-    Punto 5 (aspectos): si existe modelo_aspectos.joblib se carga con las mismas
-    verificaciones (huella en ASPECTOS_SHA256 o modelo_aspectos_metadatos.json).
-    Es opcional: sin el, el servicio funciona y "aspectos" sale null.
+    Punto 5 (aspectos): el modelo de aspectos se carga con las mismas
+    verificaciones (huella en ASPECTOS_SHA256 o el registro). Es opcional: sin
+    el, el servicio funciona y "aspectos" sale null.
+
+    Punto 6 (versiones del modelo): se carga la version activa de
+    modelos/registro.json, o la fijada con MODELO_VERSION / ASPECTOS_VERSION
+    (reversion de emergencia sin tocar el registro). Si el codigo instalado no
+    reproduce la firma de esa version, no arranca.
     """
     from sklearn.exceptions import NotFittedError
     from sklearn.utils.validation import check_is_fitted
 
     t0 = time.perf_counter()
-    if not Path(ruta_modelo).exists():
-        raise ModeloNoDisponible(f"No existe {Path(ruta_modelo).name}. El servicio no entrena: "
-                                 "genera el modelo con paso8_guardar_modelo.py.")
-    paquete, compat, integridad = cargar_verificado(ruta_modelo, carpeta_permitida, "MODELO_SHA256")
+    carpeta_modelos = Path(carpeta_modelos)
+    paquete, compat, integridad, version = _cargar_version("polaridad", ruta_modelo, carpeta_permitida,
+                                                          carpeta_modelos)
     modelo = paquete["pipeline"]
     try:
         check_is_fitted(modelo)
     except NotFittedError as e:
-        raise ModeloNoDisponible(f"{Path(ruta_modelo).name} contiene un Pipeline sin entrenar: "
+        raise ModeloNoDisponible("El modelo contiene un Pipeline sin entrenar: "
                                  "regeneralo con paso8_guardar_modelo.py.") from e
     estado = {"modelo": modelo, "metadatos": paquete["metadatos"],
               "vocab": monitoreo.vocabulario(modelo),
-              "integridad": integridad, "compatibilidad": compat}
+              "integridad": integridad, "compatibilidad": compat,
+              "versiones_cargadas": {"polaridad": version}}
+    if ruta_modelo is None:
+        estado["registro_versiones"] = resumen(carpeta_modelos)
     if RUTA_REFERENCIA.exists():
         estado["referencia"] = json.loads(RUTA_REFERENCIA.read_text(encoding="utf-8"))
     # Calentamiento: carga el modelo de embeddings ahora y no en la 1a peticion
     predecir(modelo, ["calentamiento del modelo"])
 
     # Punto 5: modelo de aspectos (mismas verificaciones de huella y versiones)
-    if ruta_aspectos is not None and Path(ruta_aspectos).exists():
-        paq_asp, compat_asp, integ_asp = cargar_verificado(ruta_aspectos, carpeta_permitida, "ASPECTOS_SHA256")
+    aspectos = _cargar_version("aspectos", ruta_aspectos, carpeta_permitida, carpeta_modelos)
+    if aspectos:
+        paq_asp, compat_asp, integ_asp, version_asp = aspectos
         estado["aspectos"] = {"modelo": paq_asp["modelo"], "metadatos": paq_asp["metadatos"],
                               "integridad": integ_asp, "compatibilidad": compat_asp}
+        estado["versiones_cargadas"]["aspectos"] = version_asp
         paq_asp["modelo"].predecir(["calentamiento del modelo de aspectos"])
     else:
-        log.warning("No hay %s: las respuestas no traeran aspectos (ejecuta paso11_aspectos.py)",
-                    Path(ruta_aspectos).name if ruta_aspectos else "modelo de aspectos")
+        log.warning("No hay modelo de aspectos: las respuestas no traeran aspectos (ejecuta paso11_aspectos.py)")
     estado["segundos_carga"] = round(time.perf_counter() - t0, 2)
     return estado
 
@@ -435,7 +453,8 @@ def salud():
             "compatibilidad": {k: estado_servicio["compatibilidad"][k] for k in ("estado", "diferencias")}
             if "compatibilidad" in estado_servicio else None,  # versiones modelo vs. instaladas
             "clases": CLASES, "segundos_carga": estado_servicio.get("segundos_carga"),
-            "aspectos": _resumen_aspectos()}
+            "aspectos": _resumen_aspectos(),
+            "versiones_cargadas": estado_servicio.get("versiones_cargadas")}  # punto 6
 
 
 def _resumen_aspectos():
@@ -451,6 +470,14 @@ def _resumen_aspectos():
 @app.get("/modelo")
 def modelo():
     return estado_servicio["metadatos"]
+
+
+@app.get("/modelo/versiones")
+def modelo_versiones():
+    """Punto 6: versiones registradas de cada modelo, la activa e historial de cambios."""
+    if "registro_versiones" not in estado_servicio:
+        raise HTTPException(404, "El servicio no se cargo desde modelos/registro.json")
+    return {"cargadas": estado_servicio["versiones_cargadas"], **estado_servicio["registro_versiones"]}
 
 
 @app.get("/modelo/aspectos")

@@ -1,0 +1,107 @@
+{
+  "formato": 1,
+  "familias": {
+    "polaridad": {
+      "activa": "1.1.0",
+      "anteriores": [],
+      "versiones": {
+        "1.1.0": {
+          "sha256": "d23e25636db6f58601c5ea35c4f66e3c26df67c42fa7cda88311f8f918fc862b",
+          "entrenado_el": "2026-11-15T17:32:32",
+          "registrada_el": "2026-11-15T22:19:32",
+          "commit": "36f7f619132f41972c1f8e459bb9d89581c00f4c",
+          "codigo_sin_commit": false,
+          "genera": "paso8_guardar_modelo.py",
+          "versiones": {
+            "python": "3.12.5",
+            "sistema": "Windows-11-10.0.26300-SP0",
+            "scikit-learn": "1.9.1",
+            "joblib": "1.6.0",
+            "numpy": "2.5.3",
+            "pandas": "3.0.6",
+            "scipy": "1.18.1",
+            "sentence-transformers": "6.2.0",
+            "torch": "2.15.0+cpu",
+            "transformers": "5.22.1"
+          },
+          "metricas": {
+            "macro_f1_cv": 0.714,
+            "macro_f1_cv_desv": 0.042,
+            "macro_f1_test": 0.6645,
+            "accuracy_test": 0.6667
+          },
+          "compatibilidad_al_registrar": "ok",
+          "motivo": "Version 1.1.0 (punto 1): Pipeline unificado con paso entrada y embeddings fijados; evaluada en paso 7"
+        }
+      }
+    },
+    "aspectos": {
+      "activa": "1.0.0",
+      "anteriores": [],
+      "versiones": {
+        "1.0.0": {
+          "sha256": "d9645d1548e09a60d3ee2d763d1e404ad4424c424859a8586a1e93360150c1ba",
+          "entrenado_el": "2026-11-15T20:56:21",
+          "registrada_el": "2026-11-15T22:19:41",
+          "commit": "36f7f619132f41972c1f8e459bb9d89581c00f4c",
+          "codigo_sin_commit": false,
+          "genera": "paso11_aspectos.py",
+          "versiones": {
+            "python": "3.12.5",
+            "sistema": "Windows-11-10.0.26300-SP0",
+            "scikit-learn": "1.9.1",
+            "joblib": "1.6.0",
+            "numpy": "2.5.3",
+            "pandas": "3.0.6",
+            "scipy": "1.18.1",
+            "sentence-transformers": "6.2.0",
+            "torch": "2.15.0+cpu",
+            "transformers": "5.22.1"
+          },
+          "metricas": {
+            "presencia_macro_f1_cv": 0.5462,
+            "presencia_macro_f1_test": 0.5321,
+            "sentimiento_macro_f1_test": 0.6517,
+            "sentimiento_copiar_polaridad_macro_f1_test": 0.5375,
+            "salida_estructurada_exactitud_celdas_test": 0.8473,
+            "linea_base_nunca_mencionado_celdas_test": 0.8509
+          },
+          "compatibilidad_al_registrar": "ok",
+          "motivo": "Version 1.0.0 (punto 5): primer modelo de 9 aspectos"
+        }
+      }
+    }
+  },
+  "historial": [
+    {
+      "fecha": "2026-11-15T22:19:32",
+      "accion": "registrar",
+      "familia": "polaridad",
+      "version": "1.1.0",
+      "motivo": "Version 1.1.0 (punto 1): Pipeline unificado con paso entrada y embeddings fijados; evaluada en paso 7"
+    },
+    {
+      "fecha": "2026-11-15T22:19:32",
+      "accion": "activar",
+      "familia": "polaridad",
+      "desde": null,
+      "hacia": "1.1.0",
+      "motivo": "primera version registrada"
+    },
+    {
+      "fecha": "2026-11-15T22:19:42",
+      "accion": "registrar",
+      "familia": "aspectos",
+      "version": "1.0.0",
+      "motivo": "Version 1.0.0 (punto 5): primer modelo de 9 aspectos"
+    },
+    {
+      "fecha": "2026-11-15T22:19:42",
+      "accion": "activar",
+      "familia": "aspectos",
+      "desde": null,
+      "hacia": "1.0.0",
+      "motivo": "primera version registrada"
+    }
+  ]
+}
