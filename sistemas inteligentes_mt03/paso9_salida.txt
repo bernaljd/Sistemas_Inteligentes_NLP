@@ -1,4 +1,4 @@
-Python 3.12.5 | carpeta: C:\Users\jeank\AppData\Local\Temp\entorno_limpio_clb84xmn
+Python 3.12.5 | carpeta: C:\Users\jeank\AppData\Local\Temp\entorno_limpio_c8zhkcg5
 sys.path contiene la carpeta del proyecto: False
 
 ================================================================================
@@ -9,10 +9,15 @@ A. CARGA DEL MODELO
   [OK ] Sin pipeline_feedback.py importable -> error claro  -> No module named 'pipeline_feedback'
   [OK ] joblib.load sin avisos de version
      Modelo: LogReg + TF-IDF+Emb v1.1.0 (2026-11-15T17:32:32)
-  [OK ] scikit-learn instalado == registrado  -> instalado 1.9.1, registrado 1.9.1
-  [OK ] joblib instalado == registrado  -> instalado 1.6.0, registrado 1.6.0
-  [OK ] numpy instalado == registrado  -> instalado 2.5.3, registrado 2.5.3
-  [OK ] sentence-transformers instalado == registrado  -> instalado 6.2.0, registrado 6.2.0
+  [OK ] python instalado == registrado (critica)  -> instalado 3.12.5, registrado 3.12.5
+  [OK ] scikit-learn instalado == registrado (critica)  -> instalado 1.9.1, registrado 1.9.1
+  [OK ] joblib instalado == registrado (critica)  -> instalado 1.6.0, registrado 1.6.0
+  [OK ] numpy instalado == registrado (exacta)  -> instalado 2.5.3, registrado 2.5.3
+  [OK ] scipy instalado == registrado (exacta)  -> instalado 1.18.1, registrado 1.18.1
+  [OK ] pandas instalado == registrado (exacta)  -> instalado 3.0.6, registrado 3.0.6
+  [OK ] sentence-transformers instalado == registrado (exacta)  -> instalado 6.2.0, registrado 6.2.0
+  [OK ] torch instalado == registrado (exacta)  -> instalado 2.15.0+cpu, registrado 2.15.0+cpu
+  [OK ] transformers instalado == registrado (exacta)  -> instalado 5.22.1, registrado 5.22.1
   [OK ] Clases del modelo  -> ['negativo', 'neutral', 'positivo']
   [OK ] Pipeline unico: entrada -> features -> clf  -> ['entrada', 'features', 'clf']
   [OK ] Embeddings con revision fijada  -> paraphrase-multilingual-MiniLM-L12-v2 @ e8f8c211226b
@@ -79,10 +84,10 @@ E. COMENTARIOS CLAROS Y AMBIGUOS
 ================================================================================
 RESUMEN
 ================================================================================
-  A: 11/11 pruebas OK
+  A: 16/16 pruebas OK
   B: 7/7 pruebas OK
   C: 8/8 pruebas OK
   D: 8/8 pruebas OK
   E: 2/2 pruebas OK
 
-  TOTAL: 36/36
+  TOTAL: 41/41

@@ -12,7 +12,8 @@ que el .joblib no depende de train.csv, embeddings_*.npy ni de otros scripts.
 Pruebas:
   A. Carga          : huella sha256 = registrada y un archivo alterado se rechaza
                       sin deserializarlo (carga_segura.py), sin errores ni avisos de
-                      version, versiones instaladas = versiones registradas.
+                      version, versiones instaladas = registradas para Python y los
+                      8 paquetes del modelo (compatibilidad.py, modo estricto).
   B. Coherencia     : mismas predicciones que en el paso 7 (123/123), mismo macro-F1,
                       determinismo, lote vs. uno a uno, probabilidades suman 1.
   C. Textos vacios  : "", espacios, None, NaN, solo signos, solo stopwords.
@@ -31,7 +32,7 @@ import tempfile
 from pathlib import Path
 
 ARCHIVOS = ["modelo_final.joblib", "modelo_final_metadatos.json", "pipeline_feedback.py",
-            "carga_segura.py"]
+            "carga_segura.py", "compatibilidad.py"]
 
 
 # ---------------------------------------------------------------------------
@@ -84,7 +85,6 @@ def _env_minimo():
 def validar():
     import hashlib
     import warnings
-    from importlib import metadata
 
     import joblib
     import numpy as np
@@ -112,6 +112,9 @@ def validar():
     spec = importlib.util.spec_from_file_location("carga_segura", Path("carga_segura.py").resolve())
     cs = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(cs)
+    spec = importlib.util.spec_from_file_location("compatibilidad", Path("compatibilidad.py").resolve())
+    compat = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(compat)
 
     # 0) Seguridad en la deserializacion (imagen 3, punto 3): huella sha256
     registrada, fuente = cs.huella_esperada(Path("modelo_final.joblib").resolve())
@@ -142,10 +145,12 @@ def validar():
     modelo, meta = paquete["pipeline"], paquete["metadatos"]
     check("A", "joblib.load sin avisos de version", not avisos, "; ".join(str(a.message) for a in avisos))
     print(f"     Modelo: {meta['nombre']} v{meta['version_modelo']} ({meta['fecha']})")
-    for p in ["scikit-learn", "joblib", "numpy", "sentence-transformers"]:
-        inst = metadata.version(p)
-        check("A", f"{p} instalado == registrado", inst == meta["versiones"][p],
-              f"instalado {inst}, registrado {meta['versiones'][p]}")
+    # Punto 4: misma politica que la API (compatibilidad.py). Criticas: Python
+    # mayor.menor, scikit-learn y joblib; exactas: numpy, scipy, pandas, torch...
+    reporte = compat.comparar(meta["versiones"], estricto=True)
+    for paquete, v in reporte["versiones"].items():
+        check("A", f"{paquete} instalado == registrado ({v['nivel']})", v["ok"],
+              f"instalado {v['instalada']}, registrado {v['registrada']}")
     check("A", "Clases del modelo", list(modelo.classes_) == meta["salida"], str(list(modelo.classes_)))
     # Pipeline unificado: todas las transformaciones viajan dentro del mismo objeto
     pasos = list(modelo.named_steps)

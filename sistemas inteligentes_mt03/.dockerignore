@@ -6,6 +6,7 @@
 !modelo_final.joblib
 !modelo_final_metadatos.json
 !carga_segura.py
+!compatibilidad.py
 !requirements_modelo.txt
 !requirements_app.txt
 !web/

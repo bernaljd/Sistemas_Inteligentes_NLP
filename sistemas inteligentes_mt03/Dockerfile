@@ -1,6 +1,8 @@
-# Paso 6: imagen para desplegar la API + pagina web en cualquier servidor o nube.
+# Paso 6: imagen para desplegar la API + pagina web (Docker local).
 #   docker build -t polaridad-docente .
 #   docker run -p 8000:8000 -v polaridad_monitoreo:/app/monitoreo_datos polaridad-docente
+# Python 3.12 = misma version mayor.menor con que se guardo el modelo (3.12.5).
+# compatibilidad.py exige que coincida al arrancar; el parche (3.12.x) no cambia pickle.
 FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -10,7 +12,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# torch solo CPU (la version con GPU pesa varios GB mas y no se usa)
+# torch solo CPU (la version con GPU pesa varios GB mas y no se usa). La version
+# debe ser la de requirements_modelo.txt (test_compatibilidad.py lo comprueba).
 RUN pip install torch==2.15.0 --index-url https://download.pytorch.org/whl/cpu
 
 COPY requirements_modelo.txt requirements_app.txt ./
@@ -24,8 +27,11 @@ ARG REVISION_EMBEDDINGS=e8f8c211226b894fcb81acc59f3b34ba3efd5f42
 RUN python -c "from sentence_transformers import SentenceTransformer; \
 SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2', revision='${REVISION_EMBEDDINGS}')"
 
+# Dependencias coherentes entre si (falla el build si algun paquete exige otra version)
+RUN pip check
+
 # Solo lo necesario para servir (nada de train/test ni scripts de entrenamiento)
-COPY api.py pipeline_feedback.py monitoreo.py carga_segura.py ./
+COPY api.py pipeline_feedback.py monitoreo.py carga_segura.py compatibilidad.py ./
 # El modelo viaja con su huella sha256 (modelo_final_metadatos.json): la API no lo
 # deserializa si no coinciden. Para fijarla fuera de la imagen: -e MODELO_SHA256=...
 COPY modelo_final.joblib modelo_final_metadatos.json ./

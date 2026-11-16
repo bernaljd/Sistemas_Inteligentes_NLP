@@ -35,6 +35,8 @@ def test_salud():
     assert r.status_code == 200
     assert r.json()["estado"] == "ok"
     assert r.json()["clases"] == ["negativo", "neutral", "positivo"]
+    # punto 4: versiones instaladas = las del modelo
+    assert r.json()["compatibilidad"] == {"estado": "ok", "diferencias": []}
 
 
 def test_pagina_web_y_archivos():
@@ -163,8 +165,12 @@ def test_sin_modelo_falla_claro_y_no_entrena(tmp_path=None):
             import json
 
             from carga_segura import ruta_metadatos, sha256_archivo
-            joblib.dump({"pipeline": construir_pipeline(), "metadatos": {}}, ruta)
-            ruta_metadatos(ruta).write_text(json.dumps({f"sha256_{ruta.name}": sha256_archivo(ruta)}))
+            # con las mismas versiones del modelo real (compatibles con este entorno)
+            versiones = api.estado_servicio["metadatos"]["versiones"] if api.estado_servicio else \
+                json.loads(ruta_metadatos(api.RUTA_MODELO).read_text(encoding="utf-8"))["versiones"]
+            joblib.dump({"pipeline": construir_pipeline(), "metadatos": {"versiones": versiones}}, ruta)
+            ruta_metadatos(ruta).write_text(json.dumps({f"sha256_{ruta.name}": sha256_archivo(ruta),
+                                                        "versiones": versiones}))
         try:
             api.cargar_servicio(ruta, carpeta_permitida=tmp)
             raise AssertionError(f"{ruta.name}: el servicio arranco igual")

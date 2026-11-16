@@ -25,11 +25,14 @@ Seguridad (paso 6):
   - No se guarda el texto de los comentarios en el registro de monitoreo.
   - Deserializacion segura (imagen 3, punto 3): el .joblib solo se carga si su
     sha256 coincide con el registrado (carga_segura.py); si no, no arranca.
+  - Compatibilidad de versiones (imagen 3, punto 4): Python, scikit-learn y joblib
+    deben ser los del modelo (compatibilidad.py); si no, no arranca.
 
 Variables de entorno (todas opcionales):
   RATE_LIMIT=60  DOCS=1  MONITOREO=1  ADMIN_TOKEN=  CORS_ORIGINS=  FRAME_ANCESTORS='none'
   RUTA_REGISTRO=monitoreo/predicciones.jsonl
   MODELO_SHA256=  (huella esperada del modelo; si falta, la de modelo_final_metadatos.json)
+  VERSIONES_ESTRICTAS=0  (1 = cualquier version distinta a la del modelo impide arrancar)
 
 Ejecutar (en esta carpeta):
     uvicorn api:app --host 127.0.0.1 --port 8000
@@ -52,7 +55,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 import monitoreo
-from carga_segura import cargar_joblib_confiable, huella_esperada
+from carga_segura import cargar_joblib_confiable, huella_esperada, ruta_metadatos
+from compatibilidad import VersionesIncompatibles, exigir_compatibles
 from pipeline_feedback import CLASES, leer_csv_bytes, predecir
 
 CARPETA = Path(__file__).resolve().parent
@@ -95,15 +99,43 @@ def cargar_servicio(ruta_modelo=RUTA_MODELO, carpeta_permitida=CARPETA):
     desde la carpeta del proyecto y solo si su sha256 coincide con el registrado
     (MODELO_SHA256 o modelo_final_metadatos.json). Si no, ModeloNoConfiable y el
     servicio no arranca: el archivo nunca se deserializa.
+
+    Punto 4 (versiones): ANTES de deserializar se comparan las versiones
+    registradas en modelo_final_metadatos.json (leer JSON no ejecuta codigo) con
+    las instaladas (compatibilidad.py). Si Python (mayor.menor), scikit-learn o
+    joblib difieren, VersionesIncompatibles y el servicio no arranca; el resto
+    se informa en /salud. Al cargar, un InconsistentVersionWarning de
+    scikit-learn tambien se trata como incompatibilidad.
     """
-    from sklearn.exceptions import NotFittedError
+    import json
+    import warnings
+
+    from sklearn.exceptions import InconsistentVersionWarning, NotFittedError
     from sklearn.utils.validation import check_is_fitted
 
     t0 = time.perf_counter()
     if not Path(ruta_modelo).exists():
         raise ModeloNoDisponible(f"No existe {Path(ruta_modelo).name}. El servicio no entrena: "
                                  "genera el modelo con paso8_guardar_modelo.py.")
-    paquete = cargar_joblib_confiable(ruta_modelo, carpeta_permitida=carpeta_permitida)
+    meta_json = ruta_metadatos(ruta_modelo)
+    registradas = (json.loads(meta_json.read_text(encoding="utf-8")).get("versiones")
+                   if meta_json.is_file() else None)
+    if not registradas:
+        raise VersionesIncompatibles(f"{meta_json.name} no registra las versiones con que se entreno "
+                                     "el modelo: no se puede garantizar la compatibilidad.")
+    compat = exigir_compatibles(registradas)  # antes de deserializar
+    for d in compat["diferencias"]:
+        log.warning("Version distinta a la del modelo: %s (modelo %s, instalada %s)",
+                    d["paquete"], d["registrada"], d["instalada"])
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", InconsistentVersionWarning)  # aviso de sklearn -> error
+        try:
+            paquete = cargar_joblib_confiable(ruta_modelo, carpeta_permitida=carpeta_permitida)
+        except InconsistentVersionWarning as e:
+            raise VersionesIncompatibles(f"scikit-learn avisa de versiones distintas al cargar: {e}") from e
+    if paquete["metadatos"].get("versiones") != registradas:
+        raise VersionesIncompatibles(f"Las versiones dentro de {Path(ruta_modelo).name} no coinciden "
+                                     f"con {meta_json.name}: regeneralos juntos con el paso 8.")
     modelo = paquete["pipeline"]
     try:
         check_is_fitted(modelo)
@@ -113,9 +145,9 @@ def cargar_servicio(ruta_modelo=RUTA_MODELO, carpeta_permitida=CARPETA):
     sha256, fuente = huella_esperada(ruta_modelo)
     estado = {"modelo": modelo, "metadatos": paquete["metadatos"],
               "vocab": monitoreo.vocabulario(modelo),
-              "integridad": {"sha256": sha256, "verificado_con": fuente}}
+              "integridad": {"sha256": sha256, "verificado_con": fuente},
+              "compatibilidad": compat}
     if RUTA_REFERENCIA.exists():
-        import json
         estado["referencia"] = json.loads(RUTA_REFERENCIA.read_text(encoding="utf-8"))
     # Calentamiento: carga el modelo de embeddings ahora y no en la 1a peticion
     predecir(modelo, ["calentamiento del modelo"])
@@ -346,6 +378,8 @@ def salud():
             "modelo": m.get("nombre"), "version_modelo": m.get("version_modelo"),
             "entrenado_el": m.get("fecha"),  # se entreno antes (paso 8), no al arrancar
             "integridad": estado_servicio.get("integridad"),  # sha256 verificado al cargar
+            "compatibilidad": {k: estado_servicio["compatibilidad"][k] for k in ("estado", "diferencias")}
+            if "compatibilidad" in estado_servicio else None,  # versiones modelo vs. instaladas
             "clases": CLASES, "segundos_carga": estado_servicio.get("segundos_carga")}
 
 

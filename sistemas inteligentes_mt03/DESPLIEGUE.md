@@ -90,6 +90,30 @@ joblib usa pickle: **cargar un `.joblib` puede ejecutar cualquier código** que 
 - Límite: esto garantiza que el archivo es **el que se registró**, no que quien lo registró sea de
   confianza. El `.joblib` y su huella solo deben venir del equipo (paso 8) por el repositorio.
 
+### Compatibilidad de versiones (entrenamiento = producción)
+
+scikit-learn no garantiza que un modelo guardado con una versión se comporte igual con otra. El
+paso 8 registra las versiones exactas (en los metadatos y en `requirements_modelo.txt`), y
+`compatibilidad.py` las compara con las instaladas **antes de deserializar** el modelo:
+
+| Nivel | Paquetes | Si difiere |
+|---|---|---|
+| Crítico | Python (mayor.menor: 3.12), `scikit-learn`, `joblib` | La API **no arranca** (`VersionesIncompatibles`) |
+| Exacto | `numpy`, `scipy`, `pandas`, `sentence-transformers`, `torch`, `transformers` | Aviso en el log y en `/salud`; con `VERSIONES_ESTRICTAS=1` tampoco arranca |
+
+- El parche de Python (3.12.5 al entrenar, 3.12.16 en Docker) y etiquetas como `+cpu` no cuentan.
+- Un `InconsistentVersionWarning` de scikit-learn al cargar también se trata como incompatibilidad.
+- `/salud` muestra `compatibilidad: {estado, diferencias}`.
+- **Una sola fuente de versiones:** `requirements_modelo.txt` (lo genera el paso 8). `requirements.txt`
+  (entrenamiento), `requirements_app.txt` (producción) y `requirements_dev.txt` (pruebas) lo incluyen
+  con `-r`, y ninguna dependencia queda sin versión fija. El `Dockerfile` usa el mismo torch y
+  Python 3.12, y ejecuta `pip check`. `test_compatibilidad.py` falla si alguna fuente se desalinea.
+- Verificado en el contenedor: con las versiones correctas queda `healthy` y `compatibilidad: ok`;
+  con metadatos que dicen scikit-learn 1.8.0, no arranca y no llega a deserializar el modelo.
+- **Para actualizar una dependencia:** cambiarla en el entorno, reentrenar con el paso 8 (regenera
+  el modelo, los metadatos y `requirements_modelo.txt`), validar con el paso 9 y reconstruir la imagen.
+  Nunca actualizar scikit-learn en producción sin reentrenar.
+
 ## 2. Despliegue
 
 ### Local (desarrollo)
@@ -132,6 +156,7 @@ Variables de entorno:
 | `CORS_ORIGINS` | vacío | Orígenes permitidos, separados por comas |
 | `MONITOREO` | 1 | `0` desactiva el registro |
 | `MODELO_SHA256` | vacío | Huella esperada del modelo; si falta, se usa la de `modelo_final_metadatos.json` |
+| `VERSIONES_ESTRICTAS` | 0 | `1` = cualquier versión distinta a la del modelo impide arrancar |
 
 ## 3. Monitoreo de cambios en los datos
 
@@ -180,9 +205,12 @@ si baja, reentrenar con los pasos 6–8 y regenerar la referencia con `paso10_de
 | `api.py` | API con seguridad y registro de monitoreo |
 | `carga_segura.py` | Carga de `.joblib` solo si su sha256 coincide con el registrado |
 | `test_carga_segura.py` | 8 pruebas de deserialización segura (incluye un `.joblib` malicioso) |
+| `compatibilidad.py` | Compara las versiones del modelo con las instaladas antes de cargarlo |
+| `test_compatibilidad.py` | 13 pruebas de versiones (política y que todas las fuentes coincidan) |
 | `monitoreo.py` | Registro, referencia y reporte de deriva (PSI) |
 | `paso10_rendimiento.py` | Medición de tiempos y memoria (en proceso o contra el contenedor con `--url`) |
 | `paso10_deriva.py` | Crea la referencia y valida el monitor con 5 escenarios |
 | `test_api.py` | 24 pruebas: funcionalidad, eficiencia, seguridad y monitoreo |
 | `Dockerfile`, `.dockerignore` | Imagen de despliegue |
-| `requirements_app.txt`, `requirements_dev.txt` | Dependencias de producción y de pruebas |
+| `requirements_modelo.txt` | Versiones exactas del modelo (única fuente; la genera el paso 8) |
+| `requirements.txt`, `requirements_app.txt`, `requirements_dev.txt` | Entrenamiento, producción y pruebas (incluyen `requirements_modelo.txt`) |

@@ -1,8 +1,5 @@
-# Paso 7 - evaluacion final (requiere Python 3.11 o superior)
-# scikit-learn fijo en la version con la que se guardo modelo_paso6.joblib
-scikit-learn==1.9.1
-sentence-transformers
-numpy
-pandas
-matplotlib
-joblib
+# Pasos 1-10 (entrenamiento, evaluacion y validacion) - Python 3.12
+# Mismas versiones exactas con que se guardo el modelo (punto 4: compatibilidad):
+# entrenar con otras versiones daria un modelo distinto al servido en produccion.
+-r requirements_modelo.txt
+matplotlib==3.11.2   # graficas del paso 7 (no se usa en produccion)
