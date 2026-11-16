@@ -1,0 +1,142 @@
+{
+  "nombre": "Aspectos (9) - presencia + sentimiento (fragmento+comentario)",
+  "version_modelo": "1.0.0",
+  "fecha": "2026-11-15T20:56:21",
+  "tarea": "Para cada comentario, una prediccion por cada uno de los 9 aspectos: mencionado y sentimiento",
+  "aspectos": {
+    "contenidos": {
+      "nombre": "Contenidos",
+      "originales": [
+        "contenidos",
+        "contenido y pertinencia",
+        "cantidad de temas y repaso al inicio del curso"
+      ]
+    },
+    "evaluacion": {
+      "nombre": "Evaluación",
+      "originales": [
+        "parciales",
+        "dificultad de las preguntas en los parciales",
+        "diseno de la evaluacion y criterios"
+      ]
+    },
+    "retroalimentacion": {
+      "nombre": "Retroalimentación",
+      "originales": [
+        "retroalimentacion de los examenes",
+        "retroalimentacion recibida",
+        "comentarios del profesor"
+      ]
+    },
+    "metodologia": {
+      "nombre": "Metodología",
+      "originales": [
+        "metodologia del profesor",
+        "actividades y metodologia",
+        "claridad de exposicion"
+      ]
+    },
+    "material": {
+      "nombre": "Material de clase",
+      "originales": [
+        "material de clase",
+        "diseno de las diapositivas"
+      ]
+    },
+    "organizacion": {
+      "nombre": "Organización y horario",
+      "originales": [
+        "organizacion del curso y su planeacion",
+        "horario"
+      ]
+    },
+    "carga": {
+      "nombre": "Carga de trabajo",
+      "originales": [
+        "carga_academica",
+        "ritmo y carga de trabajo"
+      ]
+    },
+    "recursos_digitales": {
+      "nombre": "Recursos digitales",
+      "originales": [
+        "disponibilidad de los recursos en el aula digital",
+        "soporte tecnico y plataforma"
+      ]
+    },
+    "comunicacion": {
+      "nombre": "Comunicación e interacción",
+      "originales": [
+        "respuesta oportuna a los correos",
+        "clima de aula e interaccion"
+      ]
+    }
+  },
+  "formato_salida": {
+    "aspecto": "clave",
+    "nombre": "texto",
+    "mencionado": "bool",
+    "probabilidad": "float | null",
+    "sentimiento": "negativo | neutral | positivo | null",
+    "probabilidades_sentimiento": "{clase: float} | null"
+  },
+  "metricas": {
+    "presencia_macro_f1_cv": 0.546249728751224,
+    "presencia_macro_f1_test": 0.5321390765081243,
+    "presencia_f1_test": {
+      "contenidos": 0.684931506849315,
+      "evaluacion": 0.6363636363636364,
+      "retroalimentacion": 0.5806451612903226,
+      "metodologia": 0.43478260869565216,
+      "material": 0.6046511627906976,
+      "organizacion": 0.7619047619047619,
+      "carga": 0.3076923076923077,
+      "recursos_digitales": 0.47058823529411764,
+      "comunicacion": 0.3076923076923077
+    },
+    "sentimiento_macro_f1_test": 0.6517016168022879,
+    "sentimiento_copiar_polaridad_macro_f1_test": 0.5374576566065928,
+    "salida_estructurada_tuplas_test": {
+      "precision": 0.4032258064516129,
+      "recall": 0.45454545454545453,
+      "f1": 0.42735042735042733
+    },
+    "salida_estructurada_exactitud_celdas_test": 0.8473351400180669,
+    "linea_base_nunca_mencionado_celdas_test": 0.8509485094850948
+  },
+  "parametros": {
+    "umbral_mencion": 0.5,
+    "C_presencia": 1.0,
+    "C_sentimiento": 1.0,
+    "entrada_sentimiento": "fragmento+comentario",
+    "embeddings": {
+      "modelo": "paraphrase-multilingual-MiniLM-L12-v2",
+      "revision": "e8f8c211226b894fcb81acc59f3b34ba3efd5f42"
+    }
+  },
+  "datos": {
+    "train.csv": {
+      "sha256": "7604d4bf48dfa2c60be01851ad23245be03d00f51006703b5f37b4b9b48778f1",
+      "filas": 491
+    },
+    "test.csv": {
+      "sha256": "9689b878fca098af8955035080aa9cc87c9d2b2eeab818c0b60030e8c08a26a0",
+      "filas": 123
+    }
+  },
+  "entrenado_con": "train.csv; test.csv solo para la evaluacion final",
+  "versiones": {
+    "python": "3.12.5",
+    "sistema": "Windows-11-10.0.26300-SP0",
+    "scikit-learn": "1.9.1",
+    "joblib": "1.6.0",
+    "numpy": "2.5.3",
+    "pandas": "3.0.6",
+    "scipy": "1.18.1",
+    "sentence-transformers": "6.2.0",
+    "torch": "2.15.0+cpu",
+    "transformers": "5.22.1"
+  },
+  "dependencia_codigo": "aspectos.py y pipeline_feedback.py deben estar importables al cargar el .joblib",
+  "sha256_modelo_aspectos.joblib": "d9645d1548e09a60d3ee2d763d1e404ad4424c424859a8586a1e93360150c1ba"
+}

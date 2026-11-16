@@ -7,6 +7,9 @@
 !modelo_final_metadatos.json
 !carga_segura.py
 !compatibilidad.py
+!aspectos.py
+!modelo_aspectos.joblib
+!modelo_aspectos_metadatos.json
 !requirements_modelo.txt
 !requirements_app.txt
 !web/

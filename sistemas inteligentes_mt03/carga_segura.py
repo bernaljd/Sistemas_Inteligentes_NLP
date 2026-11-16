@@ -11,7 +11,8 @@ solamente archivos de confianza. Este modulo lo hace cumplir:
      /tmp, de una subida de usuario o de una ruta manipulada (../../).
   2. Huella sha256 esperada: se compara con un valor registrado APARTE del
      .joblib, en un JSON (leer JSON no ejecuta codigo):
-       - variable de entorno MODELO_SHA256 (fijarla en el despliegue), o
+       - variable de entorno MODELO_SHA256 (ASPECTOS_SHA256 para el modelo de
+       aspectos; fijarlas en el despliegue), o
        - <nombre>_metadatos.json, clave "sha256_<nombre>.joblib" (paso 8).
      Si no hay huella registrada, NO se carga.
   3. Sin carrera entre verificar y cargar: el archivo se lee UNA vez en
@@ -66,12 +67,16 @@ def ruta_metadatos(ruta_modelo):
     return ruta_modelo.with_name(f"{ruta_modelo.stem}_metadatos.json")
 
 
-def huella_esperada(ruta_modelo):
-    """Devuelve (sha256, fuente). Lanza ModeloNoConfiable si no esta registrada."""
+def huella_esperada(ruta_modelo, variable_sha256="MODELO_SHA256"):
+    """Devuelve (sha256, fuente). Lanza ModeloNoConfiable si no esta registrada.
+
+    variable_sha256: variable de entorno con la huella de ESTE modelo (cada
+    modelo tiene la suya: MODELO_SHA256 polaridad, ASPECTOS_SHA256 aspectos).
+    """
     ruta_modelo = Path(ruta_modelo)
-    variable = os.environ.get("MODELO_SHA256", "").strip().lower()
+    variable = os.environ.get(variable_sha256, "").strip().lower()
     if variable:
-        return variable, "variable de entorno MODELO_SHA256"
+        return variable, f"variable de entorno {variable_sha256}"
     meta = ruta_metadatos(ruta_modelo)
     if not meta.is_file():
         raise ModeloNoConfiable(f"No hay huella registrada para {ruta_modelo.name}: falta {meta.name} "
@@ -95,7 +100,7 @@ def huella_en_registro(ruta_registro, nombre_archivo):
     return valor
 
 
-def cargar_joblib_confiable(ruta, sha256=None, carpeta_permitida=CARPETA):
+def cargar_joblib_confiable(ruta, sha256=None, carpeta_permitida=CARPETA, variable_sha256="MODELO_SHA256"):
     """Carga un .joblib solo si esta en la carpeta permitida y su sha256 coincide.
 
     sha256: huella esperada; si no se da, se busca con huella_esperada().
@@ -112,7 +117,8 @@ def cargar_joblib_confiable(ruta, sha256=None, carpeta_permitida=CARPETA):
     if carpeta_permitida is not None and not real.is_relative_to(Path(carpeta_permitida).resolve()):
         raise ModeloNoConfiable(f"{real} esta fuera de la carpeta permitida ({carpeta_permitida}).")
 
-    esperado, fuente = (sha256.strip().lower(), "argumento sha256") if sha256 else huella_esperada(real)
+    esperado, fuente = ((sha256.strip().lower(), "argumento sha256") if sha256
+                        else huella_esperada(real, variable_sha256))
     if not _HEX64.fullmatch(esperado):
         raise ModeloNoConfiable(f"La huella esperada ({fuente}) no es un sha256 valido.")
 

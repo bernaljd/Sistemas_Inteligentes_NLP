@@ -1,0 +1,85 @@
+
+================================================================================
+1. DATOS: 22 nombres de aspecto -> 9 aspectos
+================================================================================
+  contenidos           Contenidos                   <- contenidos, contenido y pertinencia, cantidad de temas y repaso al inicio del curso
+  evaluacion           Evaluación                   <- parciales, dificultad de las preguntas en los parciales, diseno de la evaluacion y criterios
+  retroalimentacion    Retroalimentación            <- retroalimentacion de los examenes, retroalimentacion recibida, comentarios del profesor
+  metodologia          Metodología                  <- metodologia del profesor, actividades y metodologia, claridad de exposicion
+  material             Material de clase            <- material de clase, diseno de las diapositivas
+  organizacion         Organización y horario       <- organizacion del curso y su planeacion, horario
+  carga                Carga de trabajo             <- carga_academica, ritmo y carga de trabajo
+  recursos_digitales   Recursos digitales           <- disponibilidad de los recursos en el aula digital, soporte tecnico y plataforma
+  comunicacion         Comunicación e interacción   <- respuesta oportuna a los correos, clima de aula e interaccion
+
+Comentarios que mencionan cada aspecto:
+                    train  test
+contenidos            291    67
+evaluacion             75    19
+retroalimentacion      59    15
+metodologia            59    11
+material               45    21
+organizacion           48    11
+carga                  27     8
+recursos_digitales     40     8
+comunicacion           33     5
+Sin ningun aspecto: train 52, test 8
+Pares comentario-aspecto en train: 677 | sentimiento == polaridad del comentario: 50%
+
+================================================================================
+2. VALIDACION CRUZADA (5 particiones, solo train)
+================================================================================
+  particion 1 lista
+  particion 2 lista
+  particion 3 lista
+  particion 4 lista
+  particion 5 lista
+
+Presencia (F1 por aspecto, umbral 0.5):
+  contenidos           modelo 0.65 | azar 0.62
+  evaluacion           modelo 0.63 | azar 0.12
+  retroalimentacion    modelo 0.63 | azar 0.10
+  metodologia          modelo 0.36 | azar 0.11
+  material             modelo 0.47 | azar 0.05
+  organizacion         modelo 0.68 | azar 0.10
+  carga                modelo 0.18 | azar 0.04
+  recursos_digitales   modelo 0.64 | azar 0.10
+  comunicacion         modelo 0.69 | azar 0.14
+  MACRO                modelo 0.546 | azar 0.153
+
+Sentimiento sobre los pares reales (macro-F1):
+  copiar polaridad       macro-F1 = 0.504  accuracy = 0.501
+  mayoritaria            macro-F1 = 0.221  accuracy = 0.495
+  comentario             macro-F1 = 0.645  accuracy = 0.691
+  fragmento+comentario   macro-F1 = 0.676  accuracy = 0.715
+
+Diseno elegido por CV: fragmento+comentario
+
+================================================================================
+3. EVALUACION EN TEST (una sola vez)
+================================================================================
+Presencia por aspecto:
+  contenidos           P = 0.63  R = 0.75  F1 = 0.68  (n = 67)
+  evaluacion           P = 0.56  R = 0.74  F1 = 0.64  (n = 19)
+  retroalimentacion    P = 0.56  R = 0.60  F1 = 0.58  (n = 15)
+  metodologia          P = 0.42  R = 0.45  F1 = 0.43  (n = 11)
+  material             P = 0.59  R = 0.62  F1 = 0.60  (n = 21)
+  organizacion         P = 0.80  R = 0.73  F1 = 0.76  (n = 11)
+  carga                P = 0.40  R = 0.25  F1 = 0.31  (n = 8)
+  recursos_digitales   P = 0.44  R = 0.50  F1 = 0.47  (n = 8)
+  comunicacion         P = 0.25  R = 0.40  F1 = 0.31  (n = 5)
+  MACRO                F1 = 0.532
+
+Sentimiento en los 165 pares reales de test: macro-F1 = 0.652 (copiar la polaridad real del comentario: 0.537)
+Salida estructurada, tuplas (comentario, aspecto, sentimiento): P = 0.403  R = 0.455  F1 = 0.427  (75 correctas de 186 predichas y 165 reales)
+Exactitud por celda: 84.7% (linea base 'nunca mencionado': 85.1%; no es buena medida aqui)
+
+Ejemplo: El profesor sabe mucho y explica muy bien, pero los parciales son injustos y nunca responde los correos.
+  metodologia          p = 0.58  sentimiento = neutral
+  comunicacion         p = 0.67  sentimiento = negativo
+
+================================================================================
+4. GUARDADO
+================================================================================
+Guardados: modelo_aspectos.joblib (253 KB), modelo_aspectos_metadatos.json,
+           resultados_aspectos.csv, paso11_salida.txt

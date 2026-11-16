@@ -17,17 +17,22 @@ FastAPI 0.163.0 + Starlette 1.10.0 y la auditoría quedó limpia.
 
 ### Tiempos de inferencia (contenedor Docker local, CPU)
 
-Medido por HTTP contra el contenedor real (`paso10_rendimiento.py --url`), que es el despliegue,
-en un PC de 16 núcleos lógicos y 31.6 GB de RAM. Objetivos fijados antes de medir.
+Medido por HTTP contra el contenedor real, que es el despliegue, en un PC de 16 núcleos lógicos y
+31.6 GB de RAM, con polaridad **y** los 9 aspectos (punto 5) en cada respuesta. Objetivos fijados
+antes de medir.
 
-| Prueba | Medido | Objetivo |
-|---|---|---|
-| Un comentario (p50 / p95, 300 peticiones) | 35 ms / 52 ms | ≤ 500 ms ✔ |
-| Comentario de 5000 caracteres (mediana) | 49 ms | — |
-| Lote de 100 comentarios | 1.3 s (~13 ms por comentario) | ≤ 5 s ✔ |
-| CSV de 1000 filas | 11.0 s | ≤ 60 s ✔ |
-| Arranque (cargar + calentar, según `/salud`) | 5.3 s | ≤ 120 s ✔ |
-| Memoria del contenedor (`docker stats`) | 672 MB tras cargar · 860 MB tras las pruebas | ≤ 2 GB ✔ |
+| Prueba | Comentarios nuevos | Comentarios repetidos (`paso10_rendimiento.py --url`) | Objetivo |
+|---|---|---|---|
+| Un comentario (p50 / p95) | 53 ms / 73 ms | 24 ms / 71 ms | ≤ 500 ms ✔ |
+| Lote de 100 comentarios | 1.9 s | 0.9 s | ≤ 5 s ✔ |
+| CSV de 1000 filas | 16.1 s | 7.4 s | ≤ 60 s ✔ |
+| Arranque (cargar + calentar los dos modelos, según `/salud`) | 7.7 s | | ≤ 120 s ✔ |
+| Memoria del contenedor (`docker stats`) | ~1.0 GB tras cargar · 1.2 GB tras las pruebas | | ≤ 2 GB ✔ |
+
+`paso10_rendimiento.py` repite los 123 comentarios de test, y el modelo de aspectos guarda en caché
+los embeddings ya calculados (máximo 20 000 textos), así que esa columna es optimista. La columna
+"comentarios nuevos" usa textos distintos en cada petición, y es la cifra realista. Sin aspectos
+(antes del punto 5), un comentario tardaba p95 52 ms y el lote de 100, 1.3 s.
 
 Una medición anterior en un portátil con 7.7 GB de RAM y solo 0.5 GB libres (el sistema paginaba a
 disco) dio p95 de 1076 ms, 15.8 s para el lote de 100 y 167 s de arranque: el servicio necesita
@@ -112,7 +117,49 @@ paso 8 registra las versiones exactas (en los metadatos y en `requirements_model
   con metadatos que dicen scikit-learn 1.8.0, no arranca y no llega a deserializar el modelo.
 - **Para actualizar una dependencia:** cambiarla en el entorno, reentrenar con el paso 8 (regenera
   el modelo, los metadatos y `requirements_modelo.txt`), validar con el paso 9 y reconstruir la imagen.
-  Nunca actualizar scikit-learn en producción sin reentrenar.
+  Nunca actualizar scikit-learn en producción sin reentrenar. El modelo de aspectos (paso 11) pasa
+  por la misma verificación con sus propios metadatos: si cambian las versiones, reentrenarlo también.
+
+### Salida estructurada: una predicción por aspecto
+
+Cada predicción (`/predecir`, `/predecir/lote`, `/predecir/csv`) trae, además de la polaridad, el
+campo `aspectos`: **siempre los 9 aspectos, en el mismo orden**, cada uno con este formato:
+
+```json
+{"aspecto": "evaluacion", "nombre": "Evaluación", "mencionado": true, "probabilidad": 0.81,
+ "sentimiento": "negativo",
+ "probabilidades_sentimiento": {"negativo": 0.74, "neutral": 0.18, "positivo": 0.08}}
+```
+
+- `mencionado`: el comentario habla del aspecto (probabilidad ≥ 0.5). Si no, `sentimiento` y
+  `probabilidades_sentimiento` son `null`. En textos vacíos los 9 salen con `probabilidad: null`.
+- Los 9 aspectos agrupan los 22 nombres de la columna `aspectos` de los datos (ver `aspectos.py`):
+  contenidos, evaluación, retroalimentación, metodología, material de clase, organización y horario,
+  carga de trabajo, recursos digitales, comunicación e interacción.
+- Modelo (`paso11_aspectos.py`, elegido con validación cruzada solo en train): presencia con una
+  regresión logística por aspecto sobre TF-IDF + embeddings; sentimiento con el **fragmento** del
+  comentario que habla del aspecto (cortando por ".", "pero", "aunque"...) + el comentario completo.
+  El sentimiento de un aspecto solo coincide con la polaridad del comentario en ~50 % de los casos
+  ("sabe mucho, pero los parciales son injustos"), por eso no basta con copiar la polaridad.
+
+| Resultado | Validación cruzada (train) | Test |
+|---|---|---|
+| Presencia, macro-F1 de los 9 aspectos (azar: 0.15) | 0.546 | 0.532 |
+| Sentimiento en los pares reales, macro-F1 | 0.676 | 0.652 |
+| … copiando la polaridad **real** del comentario | 0.504 | 0.537 |
+| Tuplas completas (aspecto + sentimiento) correctas: P / R / F1 | | 0.40 / 0.46 / 0.43 |
+
+- **Límites (honestos):** la presencia es buena en organización/horario (F1 0.76), contenidos y
+  evaluación, y débil en carga de trabajo y comunicación (F1 0.31, pocos ejemplos: 8 y 5 en test).
+  Las etiquetas de aspectos son escasas (27-291 comentarios por aspecto en train). Úsese como apoyo
+  para orientar la lectura, no como conteo exacto. (La "exactitud por celda", 84.7 %, no se usa como
+  métrica: marcar siempre "no mencionado" ya daría 85.1 %.)
+- `GET /modelo/aspectos` devuelve los metadatos y métricas; `/salud` muestra su versión, huella y
+  compatibilidad. El modelo es un archivo aparte (`modelo_aspectos.joblib`) con su propia huella
+  (`ASPECTOS_SHA256` o `modelo_aspectos_metadatos.json`): el modelo de polaridad no cambió. Si no
+  existe el archivo, el servicio funciona igual y `aspectos` sale `null`.
+- La página web muestra los aspectos mencionados con su sentimiento (en texto, no solo en color), y
+  el CSV descargado tiene una columna `aspecto_<clave>` por aspecto.
 
 ## 2. Despliegue
 
@@ -157,6 +204,7 @@ Variables de entorno:
 | `MONITOREO` | 1 | `0` desactiva el registro |
 | `MODELO_SHA256` | vacío | Huella esperada del modelo; si falta, se usa la de `modelo_final_metadatos.json` |
 | `VERSIONES_ESTRICTAS` | 0 | `1` = cualquier versión distinta a la del modelo impide arrancar |
+| `ASPECTOS_SHA256` | vacío | Huella esperada del modelo de aspectos; si falta, la de `modelo_aspectos_metadatos.json` |
 
 ## 3. Monitoreo de cambios en los datos
 
@@ -207,6 +255,11 @@ si baja, reentrenar con los pasos 6–8 y regenerar la referencia con `paso10_de
 | `test_carga_segura.py` | 8 pruebas de deserialización segura (incluye un `.joblib` malicioso) |
 | `compatibilidad.py` | Compara las versiones del modelo con las instaladas antes de cargarlo |
 | `test_compatibilidad.py` | 13 pruebas de versiones (política y que todas las fuentes coincidan) |
+| `aspectos.py` | Los 9 aspectos y el modelo de presencia + sentimiento por aspecto |
+| `paso11_aspectos.py` | Elige el diseño con validación cruzada, evalúa en test y guarda el modelo de aspectos |
+| `modelo_aspectos.joblib`, `modelo_aspectos_metadatos.json` | Modelo de aspectos con su huella, versiones y métricas |
+| `resultados_aspectos.csv`, `paso11_salida.txt` | Resultados por aspecto (CV y test) |
+| `test_aspectos.py` | 11 pruebas de la salida estructurada (formato, vacíos, API, huella, métricas) |
 | `monitoreo.py` | Registro, referencia y reporte de deriva (PSI) |
 | `paso10_rendimiento.py` | Medición de tiempos y memoria (en proceso o contra el contenedor con `--url`) |
 | `paso10_deriva.py` | Crea la referencia y valida el monitor con 5 escenarios |

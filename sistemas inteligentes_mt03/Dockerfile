@@ -31,10 +31,12 @@ SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2', revision='${REVISIO
 RUN pip check
 
 # Solo lo necesario para servir (nada de train/test ni scripts de entrenamiento)
-COPY api.py pipeline_feedback.py monitoreo.py carga_segura.py compatibilidad.py ./
+COPY api.py pipeline_feedback.py aspectos.py monitoreo.py carga_segura.py compatibilidad.py ./
 # El modelo viaja con su huella sha256 (modelo_final_metadatos.json): la API no lo
 # deserializa si no coinciden. Para fijarla fuera de la imagen: -e MODELO_SHA256=...
 COPY modelo_final.joblib modelo_final_metadatos.json ./
+# Punto 5: modelo de 9 aspectos (opcional para la API), tambien con su huella
+COPY modelo_aspectos.joblib modelo_aspectos_metadatos.json ./
 COPY web/ ./web/
 COPY monitoreo/referencia.json ./monitoreo/referencia.json
 

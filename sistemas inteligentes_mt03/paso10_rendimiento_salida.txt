@@ -1,31 +1,31 @@
 CPU: Intel64 Family 6 Model 186 Stepping 2, GenuineIntel | nucleos logicos: 16 | RAM: 31.6 GB | Python 3.12.5
-Modo: servicio desplegado http://127.0.0.1:8012 | contenedor polaridad
+Modo: servicio desplegado http://127.0.0.1:8015 | contenedor polaridad
 Tamano de modelo_final.joblib: 92 KB (+ ~470 MB del modelo MiniLM en la cache de Hugging Face)
 
-1. Arranque del servicio (cargar + calentar, segun /salud): 5.3 s | memoria 672 MB
+1. Arranque del servicio (cargar + calentar, segun /salud): 7.7 s | memoria 1028 MB
 
-2. Un comentario (300 peticiones): media 37 ms | p50 35 | p95 52 | p99 64 | max 98 ms
-   Comentario de 5000 caracteres (maximo permitido): mediana 49 ms
+2. Un comentario (300 peticiones): media 35 ms | p50 24 | p95 71 | p99 86 | max 109 ms
+   Comentario de 5000 caracteres (maximo permitido): mediana 35 ms
 
 3. Lotes:
-       1 comentarios:       36 ms  (  36.3 ms/comentario,   27.6 comentarios/s)
-      10 comentarios:      178 ms  (  17.8 ms/comentario,   56.2 comentarios/s)
-      50 comentarios:      668 ms  (  13.4 ms/comentario,   74.8 comentarios/s)
-     100 comentarios:     1258 ms  (  12.6 ms/comentario,   79.5 comentarios/s)
-     500 comentarios:     5334 ms  (  10.7 ms/comentario,   93.7 comentarios/s)
-    1000 comentarios:    10205 ms  (  10.2 ms/comentario,   98.0 comentarios/s)
+       1 comentarios:       24 ms  (  23.9 ms/comentario,   41.8 comentarios/s)
+      10 comentarios:      127 ms  (  12.7 ms/comentario,   78.8 comentarios/s)
+      50 comentarios:      547 ms  (  10.9 ms/comentario,   91.3 comentarios/s)
+     100 comentarios:      948 ms  (   9.5 ms/comentario,  105.4 comentarios/s)
+     500 comentarios:     3952 ms  (   7.9 ms/comentario,  126.5 comentarios/s)
+    1000 comentarios:     7653 ms  (   7.7 ms/comentario,  130.7 comentarios/s)
 
-4. CSV de 1000 filas: 11.0 s
+4. CSV de 1000 filas: 7.4 s
 
-5. Memoria del contenedor: tras cargar 672 MB | tras todas las pruebas 860 MB
+5. Memoria del contenedor: tras cargar 1028 MB | tras todas las pruebas 1203 MB
 
 ======================================================================
 OBJETIVOS DE SERVICIO
 ======================================================================
-  p95 un comentario (ms)     medido     51.9   objetivo <= 500    CUMPLE
-  lote de 100 (s)            medido      1.3   objetivo <= 5      CUMPLE
-  CSV de 1000 filas (s)      medido     11.0   objetivo <= 60     CUMPLE
-  arranque (s)               medido      5.3   objetivo <= 120    CUMPLE
-  memoria RSS (MB)           medido    860.0   objetivo <= 2048   CUMPLE
+  p95 un comentario (ms)     medido     71.4   objetivo <= 500    CUMPLE
+  lote de 100 (s)            medido      0.9   objetivo <= 5      CUMPLE
+  CSV de 1000 filas (s)      medido      7.4   objetivo <= 60     CUMPLE
+  arranque (s)               medido      7.7   objetivo <= 120    CUMPLE
+  memoria RSS (MB)           medido   1203.2   objetivo <= 2048   CUMPLE
 
 Guardados: resultados_rendimiento.csv, paso10_rendimiento_salida.txt

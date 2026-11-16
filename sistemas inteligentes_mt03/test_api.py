@@ -131,19 +131,22 @@ def test_arranque_no_entrena():
     from sklearn.linear_model import LogisticRegression
     from sklearn.pipeline import FeatureUnion, Pipeline
 
+    import aspectos
     import pipeline_feedback as pf
 
     def prohibido(*a, **k):
         raise AssertionError("El servicio intento ENTRENAR durante el arranque")
 
     metodos = [(c, m) for c in (Pipeline, FeatureUnion, TfidfVectorizer, LogisticRegression,
-                                pf.EntradaTexto, pf.LimpiadorTexto, pf.EmbeddingsMiniLM)
+                                pf.EntradaTexto, pf.LimpiadorTexto, pf.EmbeddingsMiniLM,
+                                aspectos.ModeloAspectos)
                for m in ("fit", "fit_transform") if hasattr(c, m)]
     parches = [mock.patch.object(c, m, prohibido) for c, m in metodos]
     for p in parches:
         p.start()
     try:
         estado = api.cargar_servicio()  # carga + calentamiento, igual que el lifespan
+        assert "aspectos" in estado  # tambien se cargo (sin entrenar) el modelo de aspectos
         r = pf.predecir(estado["modelo"], ["Excelente curso, aprendi mucho."])
         assert r["estado"].iloc[0] == "ok"
     finally:

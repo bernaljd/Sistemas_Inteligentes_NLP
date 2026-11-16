@@ -1,0 +1,27 @@
+evaluacion;componente;aspecto;f1;f1_linea_base_azar;precision;recall;soporte
+cv;presencia;contenidos;0.6453;0.6231;;;
+cv;presencia;evaluacion;0.6289;0.1233;;;
+cv;presencia;retroalimentacion;0.626;0.0992;;;
+cv;presencia;metodologia;0.3582;0.1138;;;
+cv;presencia;material;0.4667;0.0471;;;
+cv;presencia;organizacion;0.68;0.0962;;;
+cv;presencia;carga;0.1818;0.0408;;;
+cv;presencia;recursos_digitales;0.6437;0.0952;;;
+cv;presencia;comunicacion;0.6857;0.137;;;
+cv;sentimiento (copiar polaridad);todos;0.5037;;;;
+cv;sentimiento (mayoritaria);todos;0.2207;;;;
+cv;sentimiento (comentario);todos;0.6454;;;;
+cv;sentimiento (fragmento+comentario);todos;0.6765;;;;
+test;presencia;contenidos;0.6849;;0.6329;0.7463;67.0
+test;presencia;evaluacion;0.6364;;0.56;0.7368;19.0
+test;presencia;retroalimentacion;0.5806;;0.5625;0.6;15.0
+test;presencia;metodologia;0.4348;;0.4167;0.4545;11.0
+test;presencia;material;0.6047;;0.5909;0.619;21.0
+test;presencia;organizacion;0.7619;;0.8;0.7273;11.0
+test;presencia;carga;0.3077;;0.4;0.25;8.0
+test;presencia;recursos_digitales;0.4706;;0.4444;0.5;8.0
+test;presencia;comunicacion;0.3077;;0.25;0.4;5.0
+test;sentimiento (fragmento+comentario);todos;0.6517;;;;
+test;sentimiento (copiar polaridad);todos;0.5375;;;;
+test;salida estructurada: tuplas (aspecto, sentimiento);todos;0.4274;;0.4032;0.4545;
+test;salida estructurada: exactitud por celda;todos;0.8473;0.8509;;;

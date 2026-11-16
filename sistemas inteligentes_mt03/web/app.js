@@ -126,7 +126,8 @@ $("#form-uno").addEventListener("submit", async (e) => {
           </div>`).join("")}
       </div>
       ${d.estado === "ambiguo" ? `<div class="aviso">Predicción <b>ambigua</b>: ninguna clase llega al 50%.
-        Conviene revisar este comentario manualmente.</div>` : ""}`;
+        Conviene revisar este comentario manualmente.</div>` : ""}
+      ${bloqueAspectos(d.aspectos)}`;
     requestAnimationFrame(() => caja.querySelectorAll(".relleno").forEach((r) => { r.style.width = `${r.dataset.w}%`; }));
   } catch (err) {
     caja.innerHTML = `<div class="aviso error">${esc(err.message)}</div>`;
@@ -135,6 +136,21 @@ $("#form-uno").addEventListener("submit", async (e) => {
     boton.textContent = "Analizar comentario";
   }
 });
+
+// Punto 5: los 9 aspectos llegan siempre; se muestran solo los mencionados,
+// con su sentimiento en texto (no solo en color) y la probabilidad de mención.
+function bloqueAspectos(aspectos) {
+  if (!aspectos) return "";
+  const mencionados = aspectos.filter((a) => a.mencionado);
+  const contenido = mencionados.length
+    ? `<ul class="lista-aspectos">${mencionados.map((a) => `
+        <li class="aspecto" style="--c:${COLOR[a.sentimiento]}"
+            title="Probabilidad de que hable de este aspecto: ${pct(a.probabilidad)}">
+          <span class="punto" aria-hidden="true"></span>${esc(a.nombre)}
+          <b>${esc(NOMBRES[a.sentimiento])}</b></li>`).join("")}</ul>`
+    : '<p class="sin-aspectos">No se detectó ningún aspecto concreto del curso.</p>';
+  return `<div class="aspectos"><small>Aspectos del curso</small>${contenido}</div>`;
+}
 
 // ---------------------------------------------------------------------------
 // Archivo CSV
@@ -266,9 +282,13 @@ function sinFormula(v) {
 
 function descargar() {
   const celda = (v) => `"${sinFormula(v).replace(/"/g, '""')}"`;
-  const lineas = [["fila", "comentario", "estado", "prediccion", "confianza", ...CLASES.map((c) => `prob_${c}`)].join(";")];
+  // Una columna por aspecto con su sentimiento (vacía si no se menciona)
+  const claves = resultadosCSV.find((r) => r.aspectos)?.aspectos.map((a) => a.aspecto) ?? [];
+  const lineas = [["fila", "comentario", "estado", "prediccion", "confianza", ...CLASES.map((c) => `prob_${c}`),
+    ...claves.map((k) => `aspecto_${k}`)].join(";")];
   resultadosCSV.forEach((r, i) => lineas.push([i + 1, celda(r.texto), r.estado, r.prediccion ?? "",
-    r.confianza ?? "", ...CLASES.map((c) => r.probabilidades[c] ?? "")].join(";")));
+    r.confianza ?? "", ...CLASES.map((c) => r.probabilidades[c] ?? ""),
+    ...claves.map((_, j) => (r.aspectos?.[j]?.mencionado ? r.aspectos[j].sentimiento : ""))].join(";")));
   const blob = new Blob(["﻿" + lineas.join("\n")], { type: "text/csv;charset=utf-8" });
   const a = Object.assign(document.createElement("a"), {
     href: URL.createObjectURL(blob),
