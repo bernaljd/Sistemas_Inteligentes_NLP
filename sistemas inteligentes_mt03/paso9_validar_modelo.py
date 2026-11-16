@@ -2,15 +2,17 @@
 Paso 9: Validar la carga del modelo y sus predicciones.
 
 "Entorno limpio": el script copia a una carpeta temporal VACIA solo lo minimo
-  - modelo_final.joblib, pipeline_feedback.py y este script
+  - modelo_final.joblib, su huella (modelo_final_metadatos.json),
+    pipeline_feedback.py, carga_segura.py y este script
   - casos_referencia.csv (comentarios de test + prediccion esperada del paso 7)
 y se vuelve a ejecutar alli en un proceso nuevo con `python -I` (aislado: sin
 variables PYTHON*, sin la carpeta del proyecto en sys.path). Asi se comprueba
 que el .joblib no depende de train.csv, embeddings_*.npy ni de otros scripts.
 
 Pruebas:
-  A. Carga          : sin errores ni avisos de version, huella sha256 correcta,
-                      versiones instaladas = versiones registradas.
+  A. Carga          : huella sha256 = registrada y un archivo alterado se rechaza
+                      sin deserializarlo (carga_segura.py), sin errores ni avisos de
+                      version, versiones instaladas = versiones registradas.
   B. Coherencia     : mismas predicciones que en el paso 7 (123/123), mismo macro-F1,
                       determinismo, lote vs. uno a uno, probabilidades suman 1.
   C. Textos vacios  : "", espacios, None, NaN, solo signos, solo stopwords.
@@ -28,7 +30,8 @@ import sys
 import tempfile
 from pathlib import Path
 
-ARCHIVOS = ["modelo_final.joblib", "pipeline_feedback.py"]
+ARCHIVOS = ["modelo_final.joblib", "modelo_final_metadatos.json", "pipeline_feedback.py",
+            "carga_segura.py"]
 
 
 # ---------------------------------------------------------------------------
@@ -103,9 +106,29 @@ def validar():
 
     # ---------------- A. Carga ----------------
     titulo("A. CARGA DEL MODELO")
+    # carga_segura.py se importa desde su archivo, SIN poner la carpeta en sys.path,
+    # para que pipeline_feedback.py siga sin ser importable en la prueba 1.
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("carga_segura", Path("carga_segura.py").resolve())
+    cs = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(cs)
+
+    # 0) Seguridad en la deserializacion (imagen 3, punto 3): huella sha256
+    registrada, fuente = cs.huella_esperada(Path("modelo_final.joblib").resolve())
+    real = hashlib.sha256(Path("modelo_final.joblib").read_bytes()).hexdigest()
+    check("A", "Huella sha256 = registrada", real == registrada, f"{real[:16]}... ({fuente})")
+    datos = bytearray(Path("modelo_final.joblib").read_bytes())
+    datos[len(datos) // 2] ^= 0xFF
+    Path("alterado.joblib").write_bytes(bytes(datos))
+    try:
+        cs.cargar_joblib_confiable("alterado.joblib", sha256=registrada)
+        check("A", "Archivo alterado -> rechazado sin deserializar", False, "se cargo")
+    except cs.ModeloNoConfiable as e:
+        check("A", "Archivo alterado -> rechazado sin deserializar", True, str(e)[:60] + "...")
+
     # 1) Sin el modulo pipeline_feedback importable, la carga debe fallar de forma clara
     try:
-        joblib.load("modelo_final.joblib")
+        cs.cargar_joblib_confiable("modelo_final.joblib")
         check("A", "Sin pipeline_feedback.py importable -> error claro", False, "cargo igual")
     except ModuleNotFoundError as e:
         check("A", "Sin pipeline_feedback.py importable -> error claro", True, str(e))
@@ -113,7 +136,7 @@ def validar():
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     with warnings.catch_warnings(record=True) as avisos:
         warnings.simplefilter("always")
-        paquete = joblib.load("modelo_final.joblib")  # archivo propio y de confianza
+        paquete = cs.cargar_joblib_confiable("modelo_final.joblib")  # verifica sha256 antes
     avisos = [a for a in avisos if "sklearn" in str(a.category.__module__) or
               "Version" in a.category.__name__]
     modelo, meta = paquete["pipeline"], paquete["metadatos"]

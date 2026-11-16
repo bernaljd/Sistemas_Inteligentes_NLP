@@ -24,7 +24,6 @@ import random
 import sys
 from pathlib import Path
 
-import joblib
 import numpy as np
 import pandas as pd
 from sklearn.compose import ColumnTransformer
@@ -34,6 +33,7 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.pipeline import Pipeline
 
 import monitoreo
+from carga_segura import cargar_joblib_confiable
 from pipeline_feedback import UMBRAL_CONFIANZA, limpiar_texto, predecir
 
 CARPETA = Path(__file__).resolve().parent
@@ -56,7 +56,7 @@ class Duplicar:
 _salida = open(CARPETA / "paso10_deriva_salida.txt", "w", encoding="utf-8")
 sys.stdout = Duplicar(sys.__stdout__, _salida)
 
-paquete = joblib.load(CARPETA / "modelo_final.joblib")  # archivo propio
+paquete = cargar_joblib_confiable(CARPETA / "modelo_final.joblib")  # verifica sha256 antes de cargar
 modelo, meta = paquete["pipeline"], paquete["metadatos"]
 p = meta["parametros"]
 train = pd.read_csv(CARPETA / "train.csv", sep=";")

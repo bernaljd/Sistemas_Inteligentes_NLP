@@ -65,6 +65,31 @@ modelo evaluado en el paso 7 (`/salud` muestra `entrenado_el`).
 - **Privacidad**: el registro de monitoreo **no guarda el texto** de los comentarios (solo longitud,
   % de palabras desconocidas, clase, confianza y un hash).
 
+### Seguridad en la deserialización del modelo
+
+joblib usa pickle: **cargar un `.joblib` puede ejecutar cualquier código** que el archivo indique
+(`test_carga_segura.py` lo demuestra con un archivo que crea una carpeta al cargarse). No existe un
+`joblib.load` seguro, así que solo se cargan archivos de confianza, y `carga_segura.py` lo hace cumplir:
+
+| Control | Qué evita |
+|---|---|
+| Solo `.joblib` normales dentro de la carpeta del proyecto (sin enlaces simbólicos ni `../`) | Cargar un archivo de `/tmp`, de una subida de usuario o de una ruta manipulada |
+| Huella sha256 comparada **antes** de deserializar, contra `MODELO_SHA256` o `modelo_final_metadatos.json` | Un modelo reemplazado o alterado (basta 1 byte) nunca se ejecuta |
+| Sin huella registrada → no se carga | Cargar "por si acaso" un archivo desconocido |
+| Se lee el archivo una vez y se verifican y cargan los mismos bytes | Cambiar el archivo entre la verificación y la carga |
+| En Docker el modelo pertenece a `root` y el servicio corre como `app` | Que el propio servicio pueda sobrescribir el modelo |
+
+- Todos los scripts cargan con `cargar_joblib_confiable` (la API, `paso7`, `paso8`, `paso9` y
+  `paso10_deriva`); `modelo_paso6.joblib` se verifica con la huella de `registro_modelo_paso7.json`.
+  Una prueba falla si algún script vuelve a usar `joblib.load` directo.
+- Si la huella no coincide, la API **no arranca**. Verificado en el contenedor: con
+  `-e MODELO_SHA256=000…` el contenedor termina (exit 3) con `ModeloNoConfiable`, y con la huella
+  correcta queda `healthy` y `/salud` muestra `integridad.sha256` y con qué se verificó.
+- Para que la huella no dependa de un archivo dentro de la misma imagen, se puede fijar al
+  ejecutar: `docker run -e MODELO_SHA256=<sha256 de modelo_final_metadatos.json> ...`.
+- Límite: esto garantiza que el archivo es **el que se registró**, no que quien lo registró sea de
+  confianza. El `.joblib` y su huella solo deben venir del equipo (paso 8) por el repositorio.
+
 ## 2. Despliegue
 
 ### Local (desarrollo)
@@ -106,6 +131,7 @@ Variables de entorno:
 | `ADMIN_TOKEN` | vacío | Si se define, `/monitoreo` exige la cabecera `X-Admin-Token` |
 | `CORS_ORIGINS` | vacío | Orígenes permitidos, separados por comas |
 | `MONITOREO` | 1 | `0` desactiva el registro |
+| `MODELO_SHA256` | vacío | Huella esperada del modelo; si falta, se usa la de `modelo_final_metadatos.json` |
 
 ## 3. Monitoreo de cambios en los datos
 
@@ -152,6 +178,8 @@ si baja, reentrenar con los pasos 6–8 y regenerar la referencia con `paso10_de
 | Archivo | Qué es |
 |---|---|
 | `api.py` | API con seguridad y registro de monitoreo |
+| `carga_segura.py` | Carga de `.joblib` solo si su sha256 coincide con el registrado |
+| `test_carga_segura.py` | 8 pruebas de deserialización segura (incluye un `.joblib` malicioso) |
 | `monitoreo.py` | Registro, referencia y reporte de deriva (PSI) |
 | `paso10_rendimiento.py` | Medición de tiempos y memoria (en proceso o contra el contenedor con `--url`) |
 | `paso10_deriva.py` | Crea la referencia y valida el monitor con 5 escenarios |

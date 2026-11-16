@@ -159,9 +159,14 @@ def test_sin_modelo_falla_claro_y_no_entrena(tmp_path=None):
     for ruta, mensaje in [(tmp / "no_existe.joblib", "No existe"),
                           (tmp / "sin_entrenar.joblib", "sin entrenar")]:
         if "sin_entrenar" in ruta.name:
+            # archivo de confianza (huella registrada) pero sin entrenar
+            import json
+
+            from carga_segura import ruta_metadatos, sha256_archivo
             joblib.dump({"pipeline": construir_pipeline(), "metadatos": {}}, ruta)
+            ruta_metadatos(ruta).write_text(json.dumps({f"sha256_{ruta.name}": sha256_archivo(ruta)}))
         try:
-            api.cargar_servicio(ruta)
+            api.cargar_servicio(ruta, carpeta_permitida=tmp)
             raise AssertionError(f"{ruta.name}: el servicio arranco igual")
         except api.ModeloNoDisponible as e:
             assert mensaje in str(e) and "paso8_guardar_modelo.py" in str(e)

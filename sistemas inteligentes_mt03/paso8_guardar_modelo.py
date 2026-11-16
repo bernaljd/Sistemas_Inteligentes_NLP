@@ -39,6 +39,7 @@ import joblib
 import numpy as np
 import pandas as pd
 
+from carga_segura import cargar_joblib_confiable, huella_en_registro
 from pipeline_feedback import (CLASES, MODELO_EMBEDDINGS, REVISION_EMBEDDINGS, STOPWORDS,
                                UMBRAL_CONFIANZA, construir_pipeline, limpiar_texto)
 
@@ -161,7 +162,10 @@ cos = np.sum(emb_pipe * np.load(CARPETA / "embeddings_train.npy"), axis=1)
 print(f"  Embeddings train vs embeddings_train.npy: coseno min = {cos.min():.6f}")
 assert cos.min() > 0.999
 
-anterior = joblib.load(CARPETA / "modelo_paso6.joblib")["modelo"]  # archivo propio
+# Se carga solo si su sha256 coincide con el registrado por el paso 7
+anterior = cargar_joblib_confiable(
+    CARPETA / "modelo_paso6.joblib",
+    sha256=huella_en_registro(CARPETA / "registro_modelo_paso7.json", "modelo_paso6.joblib"))["modelo"]
 cols = [f"emb_{i}" for i in range(384)]
 X_test_combo = pd.concat([test[["texto_limpio"]].reset_index(drop=True),
                           pd.DataFrame(np.load(CARPETA / "embeddings_test.npy"), columns=cols)], axis=1)

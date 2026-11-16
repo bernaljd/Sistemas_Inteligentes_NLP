@@ -25,7 +25,10 @@ RUN python -c "from sentence_transformers import SentenceTransformer; \
 SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2', revision='${REVISION_EMBEDDINGS}')"
 
 # Solo lo necesario para servir (nada de train/test ni scripts de entrenamiento)
-COPY api.py pipeline_feedback.py monitoreo.py modelo_final.joblib ./
+COPY api.py pipeline_feedback.py monitoreo.py carga_segura.py ./
+# El modelo viaja con su huella sha256 (modelo_final_metadatos.json): la API no lo
+# deserializa si no coinciden. Para fijarla fuera de la imagen: -e MODELO_SHA256=...
+COPY modelo_final.joblib modelo_final_metadatos.json ./
 COPY web/ ./web/
 COPY monitoreo/referencia.json ./monitoreo/referencia.json
 

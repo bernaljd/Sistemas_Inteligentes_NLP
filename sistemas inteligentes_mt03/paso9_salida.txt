@@ -1,9 +1,11 @@
-Python 3.12.5 | carpeta: C:\Users\jeank\AppData\Local\Temp\entorno_limpio_y5cc54vl
+Python 3.12.5 | carpeta: C:\Users\jeank\AppData\Local\Temp\entorno_limpio_clb84xmn
 sys.path contiene la carpeta del proyecto: False
 
 ================================================================================
 A. CARGA DEL MODELO
 ================================================================================
+  [OK ] Huella sha256 = registrada  -> d23e25636db6f586... (modelo_final_metadatos.json)
+  [OK ] Archivo alterado -> rechazado sin deserializar  -> La huella de alterado.joblib no coincide con la registrada e...
   [OK ] Sin pipeline_feedback.py importable -> error claro  -> No module named 'pipeline_feedback'
   [OK ] joblib.load sin avisos de version
      Modelo: LogReg + TF-IDF+Emb v1.1.0 (2026-11-15T17:32:32)
@@ -77,10 +79,10 @@ E. COMENTARIOS CLAROS Y AMBIGUOS
 ================================================================================
 RESUMEN
 ================================================================================
-  A: 9/9 pruebas OK
+  A: 11/11 pruebas OK
   B: 7/7 pruebas OK
   C: 8/8 pruebas OK
   D: 8/8 pruebas OK
   E: 2/2 pruebas OK
 
-  TOTAL: 34/34
+  TOTAL: 36/36

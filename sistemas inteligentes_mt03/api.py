@@ -23,10 +23,13 @@ Seguridad (paso 6):
   - /docs se puede apagar en produccion (DOCS=0); /monitoreo se puede proteger con
     ADMIN_TOKEN (cabecera X-Admin-Token).
   - No se guarda el texto de los comentarios en el registro de monitoreo.
+  - Deserializacion segura (imagen 3, punto 3): el .joblib solo se carga si su
+    sha256 coincide con el registrado (carga_segura.py); si no, no arranca.
 
 Variables de entorno (todas opcionales):
   RATE_LIMIT=60  DOCS=1  MONITOREO=1  ADMIN_TOKEN=  CORS_ORIGINS=  FRAME_ANCESTORS='none'
   RUTA_REGISTRO=monitoreo/predicciones.jsonl
+  MODELO_SHA256=  (huella esperada del modelo; si falta, la de modelo_final_metadatos.json)
 
 Ejecutar (en esta carpeta):
     uvicorn api:app --host 127.0.0.1 --port 8000
@@ -42,7 +45,6 @@ from collections import defaultdict, deque
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-import joblib
 import pandas as pd
 from fastapi import FastAPI, File, Header, HTTPException, Query, Request, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
@@ -50,6 +52,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 import monitoreo
+from carga_segura import cargar_joblib_confiable, huella_esperada
 from pipeline_feedback import CLASES, leer_csv_bytes, predecir
 
 CARPETA = Path(__file__).resolve().parent
@@ -79,7 +82,7 @@ class ModeloNoDisponible(RuntimeError):
     """El servicio no arranca: falta el modelo o no esta entrenado."""
 
 
-def cargar_servicio(ruta_modelo=RUTA_MODELO):
+def cargar_servicio(ruta_modelo=RUTA_MODELO, carpeta_permitida=CARPETA):
     """Carga el modelo YA ENTRENADO una sola vez, al arrancar (punto 2: eficiencia).
 
     El servicio NUNCA entrena: el entrenamiento es un paso aparte y offline
@@ -87,6 +90,11 @@ def cargar_servicio(ruta_modelo=RUTA_MODELO):
     ajustar, el arranque falla con un mensaje claro en vez de reentrenar
     (entrenar en cada arranque tardaria minutos y daria un modelo distinto
     al evaluado en el paso 7).
+
+    Punto 3 (seguridad): el .joblib se carga con cargar_joblib_confiable(): solo
+    desde la carpeta del proyecto y solo si su sha256 coincide con el registrado
+    (MODELO_SHA256 o modelo_final_metadatos.json). Si no, ModeloNoConfiable y el
+    servicio no arranca: el archivo nunca se deserializa.
     """
     from sklearn.exceptions import NotFittedError
     from sklearn.utils.validation import check_is_fitted
@@ -95,15 +103,17 @@ def cargar_servicio(ruta_modelo=RUTA_MODELO):
     if not Path(ruta_modelo).exists():
         raise ModeloNoDisponible(f"No existe {Path(ruta_modelo).name}. El servicio no entrena: "
                                  "genera el modelo con paso8_guardar_modelo.py.")
-    paquete = joblib.load(ruta_modelo)  # archivo propio y de confianza
+    paquete = cargar_joblib_confiable(ruta_modelo, carpeta_permitida=carpeta_permitida)
     modelo = paquete["pipeline"]
     try:
         check_is_fitted(modelo)
     except NotFittedError as e:
         raise ModeloNoDisponible(f"{Path(ruta_modelo).name} contiene un Pipeline sin entrenar: "
                                  "regeneralo con paso8_guardar_modelo.py.") from e
+    sha256, fuente = huella_esperada(ruta_modelo)
     estado = {"modelo": modelo, "metadatos": paquete["metadatos"],
-              "vocab": monitoreo.vocabulario(modelo)}
+              "vocab": monitoreo.vocabulario(modelo),
+              "integridad": {"sha256": sha256, "verificado_con": fuente}}
     if RUTA_REFERENCIA.exists():
         import json
         estado["referencia"] = json.loads(RUTA_REFERENCIA.read_text(encoding="utf-8"))
@@ -335,6 +345,7 @@ def salud():
     return {"estado": "ok" if "modelo" in estado_servicio else "sin_modelo",
             "modelo": m.get("nombre"), "version_modelo": m.get("version_modelo"),
             "entrenado_el": m.get("fecha"),  # se entreno antes (paso 8), no al arrancar
+            "integridad": estado_servicio.get("integridad"),  # sha256 verificado al cargar
             "clases": CLASES, "segundos_carga": estado_servicio.get("segundos_carga")}
 
 

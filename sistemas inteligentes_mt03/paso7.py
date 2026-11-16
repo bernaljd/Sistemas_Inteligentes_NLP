@@ -50,6 +50,8 @@ from datetime import datetime
 from pathlib import Path
 
 import joblib
+
+from carga_segura import cargar_joblib_confiable, huella_en_registro
 import numpy as np
 import pandas as pd
 import sklearn
@@ -245,7 +247,11 @@ principal, origen_principal = None, ""
 try:
     with warnings.catch_warnings(record=True) as avisos:
         warnings.simplefilter("always")
-        paquete = joblib.load(CARPETA / "modelo_paso6.joblib")  # archivo propio y de confianza
+        # Solo si su sha256 coincide con el de registro_modelo_paso7.json (de una
+        # ejecucion anterior); si no hay huella, no se deserializa y se reentrena.
+        paquete = cargar_joblib_confiable(
+            CARPETA / "modelo_paso6.joblib", carpeta_permitida=CARPETA,
+            sha256=huella_en_registro(CARPETA / "registro_modelo_paso7.json", "modelo_paso6.joblib"))
     for a in avisos:
         print(f"  AVISO al cargar: {a.category.__name__}: {a.message}")
     principal = paquete["modelo"]
