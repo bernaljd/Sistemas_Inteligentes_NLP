@@ -143,6 +143,15 @@ def test_html_malicioso_se_devuelve_como_dato():
     assert "esc(r.texto)" in Path("web/app.js").read_text(encoding="utf-8")
 
 
+def test_csv_descargado_neutraliza_formulas():
+    # La descarga de la pagina escapa comentarios que Excel ejecutaria como formula
+    js = Path("web/app.js").read_text(encoding="utf-8")
+    assert "function sinFormula" in js and "celda = (v) => `\"${sinFormula(v)" in js
+    # y la API devuelve el texto sin modificar (el escape es solo al exportar)
+    ataque = '=HYPERLINK("http://ejemplo.invalid","clic")'
+    assert cliente().post("/predecir", json={"texto": ataque}).json()["texto"] == ataque
+
+
 def test_peticion_demasiado_grande_413():
     r = cliente().post("/predecir/lote", content=b"x" * (7 * 1024 * 1024),
                        headers={"Content-Type": "application/json"})

@@ -253,8 +253,16 @@ function pintarTabla() {
     ${filas.length > MAX_FILAS_TABLA ? `<p class="pie-tabla">Se muestran ${MAX_FILAS_TABLA} de ${filas.length}; descarga el CSV para verlos todos.</p>` : ""}`;
 }
 
+// Un comentario que empieza por = + - @ (o tab / retorno) se volveria formula
+// al abrir el CSV en Excel: =HYPERLINK("http://...") ejecutaria un enlace.
+// Se antepone ' para que la hoja de calculo lo muestre como texto.
+function sinFormula(v) {
+  const s = String(v ?? "");
+  return /^[=+\-@\t\r]/.test(s) ? `'${s}` : s;
+}
+
 function descargar() {
-  const celda = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const celda = (v) => `"${sinFormula(v).replace(/"/g, '""')}"`;
   const lineas = [["fila", "comentario", "estado", "prediccion", "confianza", ...CLASES.map((c) => `prob_${c}`)].join(";")];
   resultadosCSV.forEach((r, i) => lineas.push([i + 1, celda(r.texto), r.estado, r.prediccion ?? "",
     r.confianza ?? "", ...CLASES.map((c) => r.probabilidades[c] ?? "")].join(";")));
