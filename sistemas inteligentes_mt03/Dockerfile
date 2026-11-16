@@ -43,5 +43,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=180s --retries=3 \
     CMD python -c "import urllib.request,os; urllib.request.urlopen(f'http://127.0.0.1:{os.environ[\"PORT\"]}/salud', timeout=8)"
 
 # 1 proceso: cada proceso carga su propia copia del modelo (~300-600 MB).
-# --proxy-headers: detras del proxy de la nube, el limite por IP usa la IP real del usuario.
-CMD ["sh", "-c", "uvicorn api:app --host 0.0.0.0 --port ${PORT} --workers 1 --proxy-headers --forwarded-allow-ips='*' --no-server-header"]
+# Sin --proxy-headers: el contenedor se expone directo (docker run -p), sin proxy
+# delante. Con --forwarded-allow-ips='*' cualquiera podia enviar X-Forwarded-For
+# con una IP falsa en cada peticion y saltarse el limite por IP.
+CMD ["sh", "-c", "uvicorn api:app --host 0.0.0.0 --port ${PORT} --workers 1 --no-server-header"]

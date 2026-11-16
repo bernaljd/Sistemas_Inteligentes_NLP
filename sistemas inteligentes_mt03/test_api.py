@@ -149,6 +149,24 @@ def test_peticion_demasiado_grande_413():
     assert r.status_code == 413
 
 
+def test_peticion_grande_en_chunks_413():
+    # Sin Content-Length (Transfer-Encoding: chunked): antes pasaba con 200
+    cuerpo = b'{"textos": ["x"]}' + b" " * (7 * 1024 * 1024)
+    trozos = (cuerpo[i:i + 65536] for i in range(0, len(cuerpo), 65536))
+    r = cliente().post("/predecir/lote", content=trozos, headers={"Content-Type": "application/json"})
+    assert r.status_code == 413, r.status_code
+    # y un CSV grande enviado igual tampoco pasa
+    csv = b"feedback\n" + b"buen curso\n" * (700 * 1024)
+    r = cliente().post("/predecir/csv", files={"archivo": ("c.csv", csv, "text/csv")})
+    assert r.status_code == 413
+
+
+def test_dockerfile_no_confia_en_x_forwarded_for():
+    # Con --forwarded-allow-ips='*' una IP falsa en X-Forwarded-For saltaba el limite
+    cmd = [l for l in Path("Dockerfile").read_text(encoding="utf-8").splitlines() if l.startswith("CMD")][0]
+    assert "--proxy-headers" not in cmd and "forwarded-allow-ips" not in cmd
+
+
 def test_limite_de_peticiones_429():
     original = api.limitador
     api.limitador = api.LimitadorPeticiones(maximo=3)

@@ -12,7 +12,10 @@ Carga modelo_final.joblib UNA vez al arrancar y expone:
 
 Seguridad (paso 6):
   - Limite de peticiones por IP en /predecir* (RATE_LIMIT por minuto) -> 429.
-  - Limite de tamano del cuerpo (6 MB) -> 413, textos <= 5000 caracteres, lotes <= 1000.
+  - Limite de tamano del cuerpo (6 MB, contando los bytes reales: tambien con
+    Transfer-Encoding chunked) -> 413, textos <= 5000 caracteres, lotes <= 1000.
+  - La IP del limite es la de la conexion: no se confia en X-Forwarded-For
+    (el Dockerfile no usa --proxy-headers; ver DESPLIEGUE.md si se pone un proxy).
   - Cabeceras: Content-Security-Policy, X-Content-Type-Options, X-Frame-Options,
     Referrer-Policy, Permissions-Policy.
   - Sin CORS: la pagina se sirve desde el mismo origen (CORS_ORIGINS para abrirlo).
@@ -133,6 +136,38 @@ class LimitadorPeticiones:
 
 
 limitador = LimitadorPeticiones(RATE_LIMIT)
+
+
+class LimiteCuerpo:
+    """Middleware ASGI: corta la peticion cuando el cuerpo REAL supera el maximo.
+
+    Revisar solo Content-Length no basta: con Transfer-Encoding: chunked no hay
+    Content-Length y el cuerpo puede ser de cualquier tamano. Aqui se cuentan los
+    bytes a medida que llegan y se lanza HTTPException(413), que FastAPI deja
+    pasar al leer el cuerpo y responde como JSON.
+    """
+
+    def __init__(self, app, maximo):
+        self.app, self.maximo = app, maximo
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            return await self.app(scope, receive, send)
+        recibido = 0
+
+        async def recibir_con_limite():
+            nonlocal recibido
+            mensaje = await receive()
+            if mensaje["type"] == "http.request":
+                recibido += len(mensaje.get("body", b""))
+                if recibido > self.maximo:
+                    raise HTTPException(413, "Peticion demasiado grande")
+            return mensaje
+
+        await self.app(scope, recibir_con_limite, send)
+
+
+app.add_middleware(LimiteCuerpo, maximo=MAX_BYTES_PETICION)
 
 CSP = ("default-src 'self'; script-src 'self'; "
        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
